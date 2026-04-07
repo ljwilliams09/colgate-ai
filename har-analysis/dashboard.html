@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAR Network Insights Dashboard</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background: #f6f2ea;
+      color: #2b2b2b;
+      margin: 0;
+      padding: 32px;
+    }
+
+    h1 {
+      font-size: 44px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      margin-bottom: 28px;
+      color: #5c5c5c;
+      max-width: 950px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: #fbf9f4;
+      border: 1px solid #ddd4c7;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      min-height: 120px;
+    }
+
+    .wide {
+      grid-column: span 2;
+    }
+
+    .card h2 {
+      font-size: 22px;
+      margin-top: 0;
+      margin-bottom: 14px;
+    }
+
+    .metric {
+      font-size: 44px;
+      color: #2f7f7b;
+      margin-top: 8px;
+      line-height: 1.1;
+    }
+
+    .metric-sub {
+      margin-top: 8px;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .empty {
+      color: #777;
+      font-style: italic;
+    }
+
+    .detail-box {
+      border: 1px solid #e1d8ca;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+      background: #fdfbf7;
+    }
+
+    .detail-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 17px;
+    }
+
+    .detail-meta {
+      color: #555;
+      font-size: 14px;
+      margin-bottom: 8px;
+      line-height: 1.55;
+    }
+
+    .detail-section-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-top: 10px;
+      margin-bottom: 6px;
+      color: #444;
+    }
+
+    .detail-list {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 14px;
+      color: #333;
+      line-height: 1.5;
+    }
+
+    code {
+      background: #f2eee7;
+      padding: 2px 5px;
+      border-radius: 6px;
+      font-size: 13px;
+      word-break: break-word;
+    }
+
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+      .wide { grid-column: span 1; }
+      .metric { font-size: 34px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>HAR Network Insights Dashboard</h1>
+  <div class="subtitle">
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Total Requests</h2>
+      <div id="totalRequests" class="metric">0</div>
+      <div class="metric-sub">All captured browser requests across HAR files</div>
+    </div>
+
+    <div class="card">
+      <h2>Total Sends</h2>
+      <div id="totalSends" class="metric">0</div>
+      <div class="metric-sub">Estimated times the user actually hit send</div>
+    </div>
+
+    <div class="card wide">
+      <h2>Detected Send Details</h2>
+      <div id="sendDetails"></div>
+    </div>
+  </div>
+
+  <script>
+    function formatNumber(n) {
+      if (n === null || n === undefined || Number.isNaN(Number(n))) return "0";
+      return Number(n).toLocaleString();
+    }
+
+    function formatDecimal(n, digits = 2) {
+      if (n === null || n === undefined || Number.isNaN(Number(n))) return "0";
+      return Number(n).toFixed(digits);
+    }
+
+    function formatBytes(bytes) {
+      const value = Number(bytes);
+      if (!value || value < 0) return "0 B";
+      const units = ["B", "KB", "MB", "GB"];
+      let size = value, unitIndex = 0;
+      while (size >= 1024 && unitIndex < units.length - 1) { size /= 1024; unitIndex++; }
+      return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 2)} ${units[unitIndex]}`;
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function renderSendDetails(details) {
+      const el = document.getElementById("sendDetails");
+
+      if (!details || details.length === 0) {
+        el.innerHTML = `<div class="empty">No send events were detected. This usually means either the HAR mostly captured page-load/background traffic, or the current send-detection rules did not match the exact prompt submission endpoint.</div>`;
+        return;
+      }
+
+      el.innerHTML = details.map(d => {
+        const categoryBreakdown = (d.category_breakdown || [])
+          .map(item => `<li>${escapeHtml(item.category)}: ${escapeHtml(item.count)}</li>`)
+          .join("");
+
+        const sendRequests = (d.send_requests || [])
+          .map(req => `
+            <li>
+              <div><strong>${escapeHtml(req.method)}</strong> ${escapeHtml(req.status)} • ${formatDecimal(req.time_ms)} ms</div>
+              <div><code>${escapeHtml(req.url)}</code></div>
+              ${req.post_data_preview ? `<div>Payload preview: <code>${escapeHtml(req.post_data_preview)}</code></div>` : ""}
+            </li>
+          `).join("");
+
+        return `
+          <div class="detail-box">
+            <div class="detail-title">${escapeHtml(d.send_id)}</div>
+            <div class="detail-meta">
+              <div><strong>HAR file:</strong> ${escapeHtml(d.har_file)}</div>
+              <div><strong>Total requests in send window:</strong> ${formatNumber(d.total_requests)}</div>
+              <div><strong>Detected send anchors:</strong> ${formatNumber(d.send_anchor_count)}</div>
+              <div><strong>Total latency:</strong> ${formatDecimal(d.total_latency_ms)} ms</div>
+              <div><strong>Average latency:</strong> ${formatDecimal(d.avg_latency_ms)} ms</div>
+              <div><strong>Total bytes:</strong> ${formatBytes(d.total_bytes)}</div>
+              <div><strong>Send window duration:</strong> ${formatDecimal(d.cluster_duration_seconds)} s</div>
+            </div>
+
+            <div class="detail-section-title">Category breakdown</div>
+            <ul class="detail-list">
+              ${categoryBreakdown || "<li>None</li>"}
+            </ul>
+
+            <div class="detail-section-title">Detected send request anchor</div>
+            <ul class="detail-list">
+              ${sendRequests || "<li>No send anchor request details available.</li>"}
+            </ul>
+          </div>
+        `;
+      }).join("");
+    }
+
+    fetch("har_analysis_output/dashboard_data.json")
+      .then(res => {
+        if (!res.ok) throw new Error(`Failed to load dashboard data: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        document.getElementById("totalRequests").textContent = formatNumber(data.total_requests);
+        document.getElementById("totalSends").textContent = formatNumber(data.sends?.total_sends || 0);
+        renderSendDetails(data.sends?.details || []);
+      })
+      .catch(error => {
+        document.getElementById("sendDetails").innerHTML = `
+          <div class="empty">Could not load dashboard data. ${escapeHtml(error.message)}</div>
+        `;
+      });
+  </script>
+</body>
+</html>
+
+#Used AI 
