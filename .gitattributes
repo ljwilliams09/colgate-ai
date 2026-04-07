@@ -1,0 +1,2 @@
+*.har filter=lfs diff=lfs merge=lfs -text
+/har[[:space:]]files/*.har filter=lfs diff=lfs merge=lfs -text
