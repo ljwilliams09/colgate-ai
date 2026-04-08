@@ -1,0 +1,27 @@
+# ChatGPT Network Analysis — TShark Findings
+# Claude Analysis of the packets received/files uploaded as well
+# This information will help us to decide what angle we wanna take with the 
+# **The data collection was not very clean because I had some other tabs open**
+
+ 
+## Data Collected
+- 3 sessions captured: page load (init), simple prompt ("hey there"), complex task
+- Tool: TShark on Windows Wi-Fi interface, filtering TLS handshakes + packet sizes
+ 
+## Traffic Volume
+- A simple "hey there" prompt transferred **1.88 MB** of data
+- Page load alone used **1.08 MB** before any prompt was sent
+- A complex task prompt ran for **104 seconds** of sustained network activity
+- You sent **more data than you received** in every session
+ 
+## Third-Party Domains Contacted
+- **Google Analytics** is pinged on every prompt, not just on page load
+- **Datadog** (error monitoring) connects during active chat sessions
+- **Cloudflare telemetry** runs silently in the background
+- **Intercom** (support chat widget) opens a live WebSocket connection on init
+- Total of **6 third-party services** detected across sessions
+ 
+## Privacy
+- Google Analytics receives data every time you send a message to ChatGPT
+- Third-party connections happen even during a simple one-word prompt
+- Your conversation activity is observable by at least 3 external companies
