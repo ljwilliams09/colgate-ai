@@ -1,5 +1,4 @@
-# all python files, for now
-*.py
+
 har_analysis_output
 *.csv
 har files/
