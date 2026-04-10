@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Network Capture</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Chrome Extension</p>
+          <h1>Network Capture</h1>
+          <p class="lede">
+            Inspect browser requests and responses from the current tab or the
+            full browser.
+          </p>
+        </div>
+        <div class="status-card">
+          <span class="status-dot"></span>
+          <span id="active-tab-label">Active tab</span>
+        </div>
+      </header>
+
+      <section class="toolbar">
+        <button
+          id="refresh-button"
+          class="button button-secondary"
+          type="button"
+        >
+          Refresh
+        </button>
+        <button id="clear-button" class="button button-primary" type="button">
+          Clear history
+        </button>
+      </section>
+
+      <section class="stats" aria-live="polite">
+        <div class="stat">
+          <span class="stat-label">Captured</span>
+          <strong id="captured-count">0</strong>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Visible</span>
+          <strong id="visible-count">0</strong>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Filter</span>
+          <strong id="filter-label">Active tab</strong>
+        </div>
+      </section>
+
+      <section class="log-panel">
+        <div id="empty-state" class="empty-state">
+          No network events captured yet.
+        </div>
+        <ul id="log-list" class="log-list" aria-label="Network requests"></ul>
+      </section>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

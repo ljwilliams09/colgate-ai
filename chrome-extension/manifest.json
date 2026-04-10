@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Colgate AI Network Capture",
+  "version": "1.0.0",
+  "description": "Capture and inspect Chrome network requests for network analysis.",
+  "permissions": ["storage", "tabs", "webRequest"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Network Capture",
+    "default_popup": "popup.html"
+  }
+}
