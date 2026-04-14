@@ -32,5 +32,3 @@
 - **and more...**
 
 ## Prompts and Response
-
--
