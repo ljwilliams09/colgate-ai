@@ -2,7 +2,7 @@
 // Receives captured send data from relay.js, stores it in chrome.storage.local,
 // and serves it to the popup when requested.
 // Also manages the badge count on the extension icon.
-
+//Used AI 
 // Open the side panel when the extension icon is clicked
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
 
