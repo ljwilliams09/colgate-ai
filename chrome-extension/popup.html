@@ -51,6 +51,28 @@
         </div>
       </section>
 
+      <section class="live-analytics" aria-live="polite">
+        <div class="live-header">
+          <p class="live-title">Live Analytics (60s)</p>
+          <span id="stream-status" class="stream-status">Connecting</span>
+        </div>
+        <div class="live-grid">
+          <div class="stat">
+            <span class="stat-label">Req/sec</span>
+            <strong id="rate-label">0.00</strong>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Error rate</span>
+            <strong id="error-rate-label">0.0%</strong>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Window events</span>
+            <strong id="window-total-label">0</strong>
+          </div>
+        </div>
+        <ul id="top-hosts" class="top-hosts" aria-label="Top domains"></ul>
+      </section>
+
       <section class="log-panel">
         <div id="empty-state" class="empty-state">
           No network events captured yet.

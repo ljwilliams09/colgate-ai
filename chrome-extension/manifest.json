@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Colgate AI Network Capture",
+  "name": "Personal Network AI Capture",
   "version": "1.0.0",
   "description": "Capture and inspect Chrome network requests for network analysis.",
   "permissions": ["storage", "tabs", "webRequest"],
