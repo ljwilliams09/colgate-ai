@@ -12,64 +12,145 @@
       margin: 0;
       padding: 32px;
     }
-
-    h1 {
-      font-size: 44px;
-      margin-bottom: 8px;
-    }
-
+    h1 { font-size: 44px; margin-bottom: 8px; }
     .subtitle {
       margin-bottom: 28px;
       color: #5c5c5c;
       max-width: 950px;
       line-height: 1.5;
     }
-
     .grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 20px;
       margin-bottom: 24px;
     }
-
     .card {
       background: #fbf9f4;
       border: 1px solid #ddd4c7;
       border-radius: 16px;
       padding: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
       min-height: 120px;
     }
+    .wide { grid-column: span 2; }
+    .card h2 { font-size: 22px; margin-top: 0; margin-bottom: 14px; }
+    .card-subtitle { font-size: 13px; color: #888; margin-bottom: 14px; }
 
-    .wide {
-      grid-column: span 2;
+    /* ── Metric cards ── */
+    .metric { font-size: 44px; color: #2f7f7b; margin-top: 8px; line-height: 1.1; }
+    .metric-sub { margin-top: 8px; color: #666; font-size: 14px; line-height: 1.4; }
+
+    /* ── Tool invocation card ── */
+    .tool-rate-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
     }
-
-    .card h2 {
-      font-size: 22px;
-      margin-top: 0;
+    .tool-rate-num { font-size: 44px; color: #2f7f7b; line-height: 1.1; }
+    .tool-rate-label { color: #666; font-size: 14px; line-height: 1.5; }
+    .use-case-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
       margin-bottom: 14px;
     }
-
-    .metric {
-      font-size: 44px;
-      color: #2f7f7b;
-      margin-top: 8px;
-      line-height: 1.1;
+    .use-case-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: bold;
+      border: 1px solid;
+    }
+    .use-case-pill { background: #f0efeb; border-color: #ccc8be; color: #555; }
+    .pill-count {
+      background: rgba(0,0,0,0.08);
+      border-radius: 999px;
+      padding: 1px 7px;
+      font-size: 12px;
     }
 
-    .metric-sub {
-      margin-top: 8px;
-      color: #666;
-      font-size: 14px;
-      line-height: 1.4;
+    /* ── TTFB bar colors are set inline via JS ── */
+
+    /* ── Tool name breakdown ── */
+    .tool-name-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .tool-chip {
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      background: #efe8dc;
+      border: 1px solid #ddd0bc;
+      color: #3f3a33;
     }
 
-    .empty {
-      color: #777;
+    /* ── TTFB chart ── */
+    .ttfb-bars { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+    .ttfb-row { display: flex; align-items: center; gap: 10px; }
+    .ttfb-label {
+      width: 220px;
+      flex-shrink: 0;
+      font-size: 13px;
+      color: #444;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ttfb-bar-wrap { flex: 1; background: #ede8de; border-radius: 4px; height: 14px; overflow: hidden; }
+    .ttfb-bar { height: 100%; border-radius: 4px; background: #2f7f7b; transition: width 0.4s; }
+    .ttfb-ms { font-size: 13px; color: #555; min-width: 60px; text-align: right; }
+
+    /* ── Model slug breakdown ── */
+    .model-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+    .model-chip {
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      background: #e8f4f0;
+      border: 1px solid #a8d8cb;
+      color: #0a4a38;
+    }
+
+    /* ── Send flow map ── */
+    .flow-header {
+      display: flex;
+      gap: 8px;
+      padding: 4px 10px 8px;
+      font-size: 11px;
+      color: #aaa;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .flow-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      background: #faf8f4;
+      border: 1px solid #ede6da;
+    }
+    .flow-col        { flex: 1; min-width: 0; }
+    .flow-col-prompt { flex: 2; }
+    .flow-col-resp   { text-align: right; }
+    .flow-prompt-text {
+      font-size: 13px;
       font-style: italic;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+    .flow-main { font-size: 13px; font-weight: bold; color: #2b2b2b; }
+    .flow-sub  { font-size: 11px; color: #999; margin-top: 2px; }
 
+    /* ── Send details (unchanged) ── */
+    .empty { color: #777; font-style: italic; }
     .detail-box {
       border: 1px solid #e1d8ca;
       border-radius: 14px;
@@ -77,36 +158,31 @@
       margin-bottom: 14px;
       background: #fdfbf7;
     }
-
-    .detail-title {
+    .detail-title { font-weight: bold; margin-bottom: 8px; font-size: 17px; }
+    .detail-meta { color: #555; font-size: 14px; margin-bottom: 8px; line-height: 1.55; }
+    .detail-section-title { font-size: 14px; font-weight: bold; margin-top: 10px; margin-bottom: 6px; color: #444; }
+    .detail-list { margin: 0; padding-left: 18px; font-size: 14px; color: #333; line-height: 1.5; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #efe8dc;
+      border: 1px solid #ddd0bc;
+      font-size: 13px;
+      color: #3f3a33;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
       font-weight: bold;
-      margin-bottom: 8px;
-      font-size: 17px;
+      margin-right: 6px;
     }
-
-    .detail-meta {
-      color: #555;
-      font-size: 14px;
-      margin-bottom: 8px;
-      line-height: 1.55;
-    }
-
-    .detail-section-title {
-      font-size: 14px;
-      font-weight: bold;
-      margin-top: 10px;
-      margin-bottom: 6px;
-      color: #444;
-    }
-
-    .detail-list {
-      margin: 0;
-      padding-left: 18px;
-      font-size: 14px;
-      color: #333;
-      line-height: 1.5;
-    }
-
+    .badge.tool-on  { background: #d4f4e8; color: #0a5c39; border: 1px solid #8fd5b4; }
+    .badge.tool-off { background: #f0efeb; color: #666; border: 1px solid #ccc; }
+    .badge.model    { background: #e8f4f0; color: #0a4a38; border: 1px solid #a8d8cb; }
     code {
       background: #f2eee7;
       padding: 2px 5px;
@@ -114,6 +190,10 @@
       font-size: 13px;
       word-break: break-word;
     }
+    .url-list { margin: 4px 0 0 0; padding: 0; list-style: none; }
+    .url-list li { font-size: 13px; color: #444; margin-bottom: 3px; }
+    .url-list li a { color: #2f7f7b; text-decoration: none; }
+    .url-list li a:hover { text-decoration: underline; }
 
     @media (max-width: 700px) {
       .grid { grid-template-columns: 1fr; }
@@ -125,120 +205,408 @@
 <body>
   <h1>HAR Network Insights Dashboard</h1>
   <div class="subtitle">
+    Estimates user send events from HAR traffic. Surfaces time-to-first-token latency,
+    tool invocation patterns, and server-side URLs fetched per send.
   </div>
 
   <div class="grid">
+
+    <!-- Total Requests -->
     <div class="card">
       <h2>Total Requests</h2>
       <div id="totalRequests" class="metric">0</div>
       <div class="metric-sub">All captured browser requests across HAR files</div>
     </div>
 
+    <!-- Total Sends -->
     <div class="card">
       <h2>Total Sends</h2>
       <div id="totalSends" class="metric">0</div>
-      <div class="metric-sub">Estimated times the user actually hit send</div>
+      <div class="metric-sub">Estimated times the user hit send</div>
     </div>
 
+    <!-- Avg TTFB (replaces Avg Unique External Domains) -->
+    <div class="card">
+      <h2>Avg. Time to First Token</h2>
+      <div id="avgTtfb" class="metric">—</div>
+      <div class="metric-sub">
+        Average <code>wait</code> time before the server began streaming a response (ms)
+      </div>
+    </div>
+
+    <!-- Tool Invocation Rate (replaces Avg Normalized Diversity) -->
+    <div class="card">
+      <h2>Tool Invocation Rate</h2>
+      <div id="toolRate" class="metric">0%</div>
+      <div class="metric-sub">
+        Fraction of sends where the model used a tool (web search, shopping, etc.)
+      </div>
+    </div>
+
+    <!-- Tool Invocation Breakdown (wide) -->
+    <div class="card wide">
+      <h2>Turn Mode &amp; Tool Breakdown</h2>
+      <div id="toolBreakdown">
+        <div class="empty">No tool data detected.</div>
+      </div>
+      <div id="sendFlowMap"></div>
+    </div>
+
+    <!-- TTFB per send bar chart (wide) -->
+    <div class="card wide">
+      <h2>Time to First Token per Send</h2>
+      <div id="ttfbChart">
+        <div class="empty">No latency data detected.</div>
+      </div>
+    </div>
+
+    <!-- Send Details (wide) -->
     <div class="card wide">
       <h2>Detected Send Details</h2>
       <div id="sendDetails"></div>
     </div>
+
   </div>
 
   <script>
-    function formatNumber(n) {
+    // ── Formatting helpers ────────────────────────────────────────────────────
+    // These are tiny utility functions used all over the dashboard to
+    // display numbers, sizes, and text in a clean, safe way.
+
+    // Formats a number with commas (e.g. 1000 → "1,000"). Returns "0" if invalid.
+    function fmt(n) {
       if (n === null || n === undefined || Number.isNaN(Number(n))) return "0";
       return Number(n).toLocaleString();
     }
 
-    function formatDecimal(n, digits = 2) {
-      if (n === null || n === undefined || Number.isNaN(Number(n))) return "0";
-      return Number(n).toFixed(digits);
+    // Formats a number to a fixed number of decimal places. Returns "—" if invalid.
+    function fmtDec(n, d = 2) {
+      if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+      return Number(n).toFixed(d);
     }
 
-    function formatBytes(bytes) {
-      const value = Number(bytes);
-      if (!value || value < 0) return "0 B";
-      const units = ["B", "KB", "MB", "GB"];
-      let size = value, unitIndex = 0;
-      while (size >= 1024 && unitIndex < units.length - 1) { size /= 1024; unitIndex++; }
-      return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 2)} ${units[unitIndex]}`;
+    // Converts a raw byte count into a human-readable size (e.g. 2048 → "2 KB")
+    function fmtBytes(bytes) {
+      const v = Number(bytes);
+      if (!v || v < 0) return "0 B";
+      const units = ["B","KB","MB","GB"];
+      let s = v, i = 0;
+      while (s >= 1024 && i < units.length - 1) { s /= 1024; i++; }
+      return `${s.toFixed(s >= 10 || i === 0 ? 0 : 2)} ${units[i]}`;
     }
 
-    function escapeHtml(str) {
+    // Escapes special HTML characters so user text can't break the page layout
+    // or inject HTML. Always use this before inserting untrusted text into the DOM.
+    function esc(str) {
       if (str === null || str === undefined) return "";
       return String(str)
-        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
     }
 
+    // ── Dynamic turn-mode colors ──────────────────────────────────────────────
+    // Instead of hardcoding colors for specific categories (text, search, shopping),
+    // we pick a color from this palette based on a hash of the category name.
+    // That way any new category (image gen, data analysis, etc.) automatically
+    // gets its own color without us having to add it manually.
+    const USE_CASE_PALETTE = [
+      { bg: "#eef2ff", border: "#c0caff", color: "#3a4abd" }, // blue  (text)
+      { bg: "#fff7e6", border: "#f5c876", color: "#7a4f00" }, // amber (search)
+      { bg: "#fff0f6", border: "#f5a0c8", color: "#7a0040" }, // pink  (shopping)
+      { bg: "#edfaf3", border: "#7dd9a8", color: "#0a5c39" }, // green
+      { bg: "#f3edff", border: "#c8a8f5", color: "#4a0a7a" }, // purple
+      { bg: "#fff4ed", border: "#f5b87a", color: "#7a3300" }, // orange
+      { bg: "#edf8ff", border: "#7acef5", color: "#003a5c" }, // cyan
+      { bg: "#fdfaed", border: "#d4c876", color: "#5c4f00" }, // yellow-green
+    ];
+
+    // Cache so we don't re-compute the same color for the same category twice
+    const useCaseColorCache = {};
+
+    // Simple string hash — turns a category name into a consistent number
+    // so the same category always maps to the same color slot
+    function hashStr(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) {
+        h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+      }
+      return Math.abs(h);
+    }
+
+    // Returns the color object for a given use-case string, computing it once and caching it
+    function getUseCaseStyle(uc) {
+      if (!useCaseColorCache[uc]) {
+        const palette = USE_CASE_PALETTE[hashStr(uc) % USE_CASE_PALETTE.length];
+        useCaseColorCache[uc] = palette;
+      }
+      return useCaseColorCache[uc];
+    }
+
+    // Renders a colored pill badge for a turn mode category with its count
+    function useCasePill(uc, count) {
+      const s = getUseCaseStyle(uc);
+      return `<span class="use-case-pill" style="background:${s.bg};border-color:${s.border};color:${s.color}">
+        ${esc(uc)} <span class="pill-count">${count}</span>
+      </span>`;
+    }
+
+    // ── Per-send flow map ─────────────────────────────────────────────────────
+    // Maps known turn modes to a short description of what the tool was doing.
+    // Anything not in this list just shows the turn mode name as-is.
+    const TOOL_SUBTITLE = {
+      text:     "no tool / memory only",
+      search:   "web search",
+      shopping: "shopping mode",
+    };
+
+    // Renders the row-by-row flow map showing each send's prompt, mode, tool, model, and response.
+    // This gives a quick visual overview of what happened across the whole session.
+    function renderSendFlowMap(details) {
+      const el = document.getElementById("sendFlowMap");
+      if (!details || !details.length) { el.innerHTML = ""; return; }
+
+      let html = `<div style="margin-top:20px;border-top:1px solid #e1d8ca;padding-top:16px;">`;
+
+      // Column headers
+      html += `
+        <div class="flow-header">
+          <div class="flow-col flow-col-prompt">Prompt</div>
+          <div class="flow-col">Turn mode</div>
+          <div class="flow-col">Tool</div>
+          <div class="flow-col">Model</div>
+          <div class="flow-col flow-col-resp">Response</div>
+        </div>`;
+
+      // One row per send event
+      details.forEach(d => {
+        const uc = (d.turn_use_case || "unknown").toLowerCase();
+        const s = getUseCaseStyle(uc);
+        const toolSub = TOOL_SUBTITLE[uc] || uc;
+        // If a tool was used, the model was likely a faster variant; otherwise it reasoned on its own
+        const modelSub = d.tool_invoked ? "faster — tool does work" : "reasoning";
+        const sendLabel = (d.send_id || "").replace(/.*::/, ""); // strip the filename prefix
+        const preview = d.anchor_preview
+          ? `"${esc(d.anchor_preview).slice(0, 45)}${d.anchor_preview.length > 45 ? "…" : ""}"`
+          : "—";
+
+        html += `
+          <div class="flow-row">
+            <div class="flow-col flow-col-prompt">
+              <div class="flow-prompt-text">${preview}</div>
+              <div class="flow-sub">${esc(sendLabel)}</div>
+            </div>
+            <div class="flow-col">
+              <span class="use-case-pill" style="background:${s.bg};border-color:${s.border};color:${s.color}">${esc(uc)}</span>
+            </div>
+            <div class="flow-col">
+              ${d.tool_name
+                ? `<div class="flow-main">${esc(d.tool_name)}</div><div class="flow-sub">${esc(toolSub)}</div>`
+                : `<div class="flow-main" style="color:#aaa">no tool</div><div class="flow-sub">${esc(toolSub)}</div>`
+              }
+            </div>
+            <div class="flow-col">
+              ${d.model_slug && d.model_slug !== "unknown"
+                ? `<div class="flow-main">${esc(d.model_slug)}</div><div class="flow-sub">${modelSub}</div>`
+                : `<div class="flow-main" style="color:#aaa">—</div>`
+              }
+            </div>
+            <div class="flow-col flow-col-resp">
+              <div class="flow-main">${fmtBytes(d.response_bytes)}</div>
+              <div class="flow-sub">TTFB ${d.ttfb_ms != null ? Math.round(d.ttfb_ms) + " ms" : "—"}</div>
+            </div>
+          </div>`;
+      });
+
+      html += `</div>`;
+      el.innerHTML = html;
+    }
+
+    // ── Turn mode & tool summary pills ────────────────────────────────────────
+    // Renders the aggregated pill counts for turn modes, tool names, and models.
+    // This is the "how many times did X happen" view across all sends.
+    function renderToolBreakdown(toolSummary) {
+      const el = document.getElementById("toolBreakdown");
+      if (!toolSummary) { el.innerHTML = `<div class="empty">No tool data.</div>`; return; }
+
+      const useCases = toolSummary.turn_use_case_breakdown || [];
+      const tools = toolSummary.tool_name_breakdown || [];
+      const models = toolSummary.model_slug_breakdown || [];
+
+      let html = "";
+
+      if (useCases.length) {
+        html += `<div style="margin-bottom:10px;font-size:14px;color:#555;font-weight:bold;">Turn mode <span style="font-weight:normal;color:#888">(decides how to answer)</span></div>`;
+        html += `<div class="use-case-row">`;
+        useCases.forEach(item => { html += useCasePill(item.use_case, item.count); });
+        html += `</div>`;
+      }
+
+      if (tools.length) {
+        html += `<div style="margin:14px 0 6px;font-size:14px;color:#555;font-weight:bold;">Tools used <span style="font-weight:normal;color:#888">(fetches what's needed)</span></div>`;
+        html += `<div class="tool-name-row">`;
+        tools.forEach(item => {
+          html += `<span class="tool-chip">${esc(item.tool_name)} <strong>(${item.count})</strong></span>`;
+        });
+        html += `</div>`;
+      }
+
+      if (models.length) {
+        html += `<div style="margin:14px 0 6px;font-size:14px;color:#555;font-weight:bold;">Models used <span style="font-weight:normal;color:#888">(writes the answer)</span></div>`;
+        html += `<div class="model-row">`;
+        models.forEach(item => {
+          html += `<span class="model-chip">${esc(item.model_slug)} <strong>(${item.count})</strong></span>`;
+        });
+        html += `</div>`;
+      }
+
+      el.innerHTML = html || `<div class="empty">No breakdown data.</div>`;
+    }
+
+    // ── TTFB bar chart ────────────────────────────────────────────────────────
+    // Renders a horizontal bar chart showing how long each send took before
+    // the server started streaming a response back (Time to First Token).
+    // Bars are colored by turn mode so you can spot patterns at a glance.
+    function renderTtfbChart(latencySummary) {
+      const el = document.getElementById("ttfbChart");
+      const rows = (latencySummary || {}).ttfb_per_send || [];
+      if (!rows.length) { el.innerHTML = `<div class="empty">No TTFB data.</div>`; return; }
+
+      // The longest bar gets 100% width; all others are scaled relative to it
+      const maxTtfb = Math.max(...rows.map(r => r.ttfb_ms || 0), 1);
+
+      let html = `<div class="ttfb-bars">`;
+      rows.forEach(row => {
+        const ttfb = row.ttfb_ms;
+        const uc = (row.turn_use_case || "unknown").toLowerCase();
+        const barColor = getUseCaseStyle(uc).border; // use the same color as the turn mode pill
+        const pct = ttfb !== null ? Math.round((ttfb / maxTtfb) * 100) : 0;
+        const label = esc(row.send_id).replace(/.*::/, "");
+        html += `
+          <div class="ttfb-row">
+            <div class="ttfb-label" title="${esc(row.send_id)}">${label}</div>
+            <div class="ttfb-bar-wrap">
+              <div class="ttfb-bar" style="width:${pct}%;background:${barColor}"></div>
+            </div>
+            <div class="ttfb-ms">${ttfb !== null ? Math.round(ttfb) + " ms" : "—"}</div>
+          </div>`;
+      });
+
+      // Build a color legend from whatever turn modes actually appear in this data
+      const legendUcs = [...new Set(rows.map(r => (r.turn_use_case || "unknown").toLowerCase()))];
+      const legendHtml = legendUcs.map(uc => {
+        const s = getUseCaseStyle(uc);
+        return `<span style="color:${s.border}">■</span> ${esc(uc)}`;
+      }).join(" &nbsp;");
+      html += `</div><div style="margin-top:12px;font-size:13px;color:#888;">Color: ${legendHtml}</div>`;
+      el.innerHTML = html;
+    }
+
+    // ── Detailed send cards ───────────────────────────────────────────────────
+    // Renders one expandable card per send event with the full breakdown:
+    // prompt preview, latency, response size, URLs the model fetched, etc.
     function renderSendDetails(details) {
       const el = document.getElementById("sendDetails");
-
-      if (!details || details.length === 0) {
-        el.innerHTML = `<div class="empty">No send events were detected. This usually means either the HAR mostly captured page-load/background traffic, or the current send-detection rules did not match the exact prompt submission endpoint.</div>`;
+      if (!details || !details.length) {
+        el.innerHTML = `<div class="empty">No send events detected.</div>`;
         return;
       }
 
       el.innerHTML = details.map(d => {
-        const categoryBreakdown = (d.category_breakdown || [])
-          .map(item => `<li>${escapeHtml(item.category)}: ${escapeHtml(item.count)}</li>`)
-          .join("");
+        // Badge showing whether a tool was used and which one
+        const toolBadge = d.tool_invoked
+          ? `<span class="badge tool-on">tool: ${esc(d.tool_name || "yes")}</span>`
+          : `<span class="badge tool-off">no tool</span>`;
 
+        // Dynamic color badge for the turn mode
+        const ucBadge = d.turn_use_case ? (() => {
+          const s = getUseCaseStyle(d.turn_use_case);
+          return `<span class="badge" style="background:${s.bg};color:${s.color};border:1px solid ${s.border}">${esc(d.turn_use_case)}</span>`;
+        })() : "";
+
+        const modelBadge = d.model_slug
+          ? `<span class="badge model">${esc(d.model_slug)}</span>` : "";
+
+        // List of request types that happened during this send window (api, static, analytics, etc.)
+        const categoryBreakdown = (d.category_breakdown || [])
+          .map(item => `<li>${esc(item.category)}: ${esc(item.count)}</li>`).join("");
+
+        // The actual POST request(s) that triggered the AI response
         const sendRequests = (d.send_requests || [])
           .map(req => `
             <li>
-              <div><strong>${escapeHtml(req.method)}</strong> ${escapeHtml(req.status)} • ${formatDecimal(req.time_ms)} ms</div>
-              <div><code>${escapeHtml(req.url)}</code></div>
-              ${req.post_data_preview ? `<div>Payload preview: <code>${escapeHtml(req.post_data_preview)}</code></div>` : ""}
-            </li>
-          `).join("");
+              <div><strong>${esc(req.method)}</strong> ${esc(req.status)} &bull; ${fmtDec(req.time_ms)} ms</div>
+              <div><code>${esc(req.url)}</code></div>
+              ${req.post_data_preview ? `<div>Payload: <code>${esc(req.post_data_preview)}</code></div>` : ""}
+            </li>`).join("");
+
+        // URLs the model fetched server-side (only shows up on search/tool turns)
+        const fetchedUrls = (d.server_fetched_urls || []);
+        const fetchedHtml = fetchedUrls.length
+          ? `<ul class="url-list">${fetchedUrls.slice(0, 15).map(u =>
+              `<li><a href="${esc(u.url)}" target="_blank" rel="noopener">${esc(u.domain)}</a> &mdash; <code style="font-size:11px">${esc(u.url.replace(/\?.*/, "?…"))}</code></li>`
+            ).join("")}${fetchedUrls.length > 15 ? `<li style="color:#888">…and ${fetchedUrls.length - 15} more</li>` : ""}</ul>`
+          : `<span class="empty">None detected (text-only turn)</span>`;
 
         return `
           <div class="detail-box">
-            <div class="detail-title">${escapeHtml(d.send_id)}</div>
+            <div class="detail-title">${esc(d.send_id)}</div>
+            <div style="margin-bottom:8px">${toolBadge}${ucBadge}${modelBadge}</div>
             <div class="detail-meta">
-              <div><strong>HAR file:</strong> ${escapeHtml(d.har_file)}</div>
-              <div><strong>Total requests in send window:</strong> ${formatNumber(d.total_requests)}</div>
-              <div><strong>Detected send anchors:</strong> ${formatNumber(d.send_anchor_count)}</div>
-              <div><strong>Total latency:</strong> ${formatDecimal(d.total_latency_ms)} ms</div>
-              <div><strong>Average latency:</strong> ${formatDecimal(d.avg_latency_ms)} ms</div>
-              <div><strong>Total bytes:</strong> ${formatBytes(d.total_bytes)}</div>
-              <div><strong>Send window duration:</strong> ${formatDecimal(d.cluster_duration_seconds)} s</div>
+              <div><strong>HAR file:</strong> ${esc(d.har_file)}</div>
+              ${d.anchor_preview ? `<div><strong>Prompt preview:</strong> <code>${esc(d.anchor_preview)}</code></div>` : ""}
+              <div><strong>TTFB:</strong> ${d.ttfb_ms !== null && d.ttfb_ms !== undefined ? Math.round(d.ttfb_ms) + " ms" : "—"}</div>
+              <div><strong>Streaming duration:</strong> ${d.receive_ms !== null && d.receive_ms !== undefined ? Math.round(d.receive_ms) + " ms" : "—"}</div>
+              <div><strong>Response size:</strong> ${fmtBytes(d.response_bytes)}</div>
+              <div><strong>SSE events:</strong> ${fmt(d.sse_event_count)}</div>
+              <div><strong>Total requests in window:</strong> ${fmt(d.total_requests)}</div>
+              <div><strong>Total latency:</strong> ${fmtDec(d.total_latency_ms)} ms</div>
+              <div><strong>Total bytes (window):</strong> ${fmtBytes(d.total_bytes)}</div>
+              <div><strong>Send window duration:</strong> ${fmtDec(d.cluster_duration_seconds)} s</div>
             </div>
 
-            <div class="detail-section-title">Category breakdown</div>
-            <ul class="detail-list">
-              ${categoryBreakdown || "<li>None</li>"}
-            </ul>
+            <div class="detail-section-title">URLs fetched server-side by the model</div>
+            ${fetchedHtml}
 
-            <div class="detail-section-title">Detected send request anchor</div>
-            <ul class="detail-list">
-              ${sendRequests || "<li>No send anchor request details available.</li>"}
-            </ul>
-          </div>
-        `;
+            <div class="detail-section-title">Category breakdown</div>
+            <ul class="detail-list">${categoryBreakdown || "<li>None</li>"}</ul>
+
+            <div class="detail-section-title">Detected send request</div>
+            <ul class="detail-list">${sendRequests || "<li>No details available.</li>"}</ul>
+          </div>`;
       }).join("");
     }
 
+    // ── Load data and render everything ──────────────────────────────────────
+    // Fetches the JSON file that analyze_har.py generated and passes each
+    // section of it to the right render function above.
     fetch("har_analysis_output/dashboard_data.json")
       .then(res => {
-        if (!res.ok) throw new Error(`Failed to load dashboard data: ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
       .then(data => {
-        document.getElementById("totalRequests").textContent = formatNumber(data.total_requests);
-        document.getElementById("totalSends").textContent = formatNumber(data.sends?.total_sends || 0);
-        renderSendDetails(data.sends?.details || []);
+        // Fill in the four summary metric cards at the top
+        document.getElementById("totalRequests").textContent = fmt(data.total_requests);
+        document.getElementById("totalSends").textContent = fmt(data.sends?.total_sends || 0);
+
+        const avgTtfb = data.latency_summary?.avg_ttfb_ms;
+        document.getElementById("avgTtfb").textContent =
+          avgTtfb !== null && avgTtfb !== undefined ? Math.round(avgTtfb) + " ms" : "—";
+
+        const rate = data.tool_summary?.tool_invocation_rate ?? 0;
+        document.getElementById("toolRate").textContent = Math.round(rate * 100) + "%";
+
+        // Render each card section
+        renderToolBreakdown(data.tool_summary || {});   // pills: turn modes, tools, models
+        renderSendFlowMap(data.sends?.details || []);   // row-by-row send map
+        renderTtfbChart(data.latency_summary || {});    // latency bar chart
+        renderSendDetails(data.sends?.details || []);   // full detail cards
       })
-      .catch(error => {
-        document.getElementById("sendDetails").innerHTML = `
-          <div class="empty">Could not load dashboard data. ${escapeHtml(error.message)}</div>
-        `;
+      .catch(err => {
+        // If the JSON file is missing or broken, show an error instead of a blank page
+        document.getElementById("sendDetails").innerHTML =
+          `<div class="empty">Could not load dashboard data: ${esc(err.message)}</div>`;
       });
   </script>
 </body>
 </html>
-
-#Used AI 
