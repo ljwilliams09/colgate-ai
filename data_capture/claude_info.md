@@ -30,3 +30,7 @@
 - **t?.gstatic.com**
   - another cdn owned by google, used for fetching some types of images
 - **and more...**
+
+## Prompts and Response
+
+-

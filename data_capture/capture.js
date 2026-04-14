@@ -71,5 +71,8 @@ const fs = require("fs"); // library to write files
     fs.appendFileSync(output, row.join(",") + "\n"); // log the response to the csv
   });
 
-  await page.goto("https://claude.ai/new"); // open claude
+  await page.goto("https://chatgpt.com"); // open claude
 })();
+
+// node capture.js to start
+// Ctrl-C to end
