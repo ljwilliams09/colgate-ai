@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Session Capture</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <h1>AI Session Capture</h1>
+    <span class="platform-badge" id="platformBadge">chatgpt + claude</span>
+  </div>
+
+  <!-- Summary stats -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-value" id="totalSends">0</div>
+      <div class="stat-label">Sends</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="toolRate">—</div>
+      <div class="stat-label">Tool rate</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="avgTtfb">—</div>
+      <div class="stat-label">Avg TTFB</div>
+    </div>
+  </div>
+
+  <!-- Per-send flow map -->
+  <div class="flow-section" id="flowSection">
+    <div class="empty" id="emptyState">
+      No sends captured yet.<br>
+      Chat with ChatGPT or Claude and this will fill in.
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <button class="btn-clear" id="clearBtn">Clear all</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

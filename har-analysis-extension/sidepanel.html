@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Session Capture</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <div class="header-title">AI Session Capture</div>
+      <div class="header-sub">chatgpt + claude</div>
+    </div>
+    <button class="btn-clear" id="clearBtn">Clear all</button>
+  </div>
+
+  <!-- Summary stats -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-value" id="totalSends">0</div>
+      <div class="stat-label">Sends</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="toolRate">—</div>
+      <div class="stat-label">Tool rate</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="avgTtfb">—</div>
+      <div class="stat-label">Avg TTFB</div>
+    </div>
+  </div>
+
+  <!-- Send cards -->
+  <div class="cards" id="cards">
+    <div class="empty" id="emptyState">
+      No sends captured yet.<br>
+      Chat with ChatGPT or Claude and it will show up here.
+    </div>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>
