@@ -1,0 +1,35 @@
+<!-- popup.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { width: 280px; padding: 16px; font-family: sans-serif; }
+    h2   { font-size: 15px; margin: 0 0 12px; }
+    .ai  { margin-bottom: 14px; padding: 12px; border-radius: 8px; }
+    .claude  { background: #fff3ee; }
+    .chatgpt { background: #eef4ff; }
+    .name    { font-size: 12px; font-weight: bold; margin-bottom: 4px; }
+    .trackers { font-size: 13px; color: #333; }
+    .footer  { font-size: 11px; color: #999; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <h2>👁 Who's watching?</h2>
+
+  <div class="ai claude">
+    <div class="name">Claude</div>
+    <div class="trackers" id="claude-list">—</div>
+  </div>
+
+  <div class="ai chatgpt">
+    <div class="name">ChatGPT</div>
+    <div class="trackers" id="chatgpt-list">—</div>
+  </div>
+
+  <div class="footer">
+    <span id="total">0</span> tracking pings logged this session
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
