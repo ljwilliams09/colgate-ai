@@ -12,3 +12,15 @@
    - Claude pings `connect.facebook.net` before the user prompt, and every single time the user interacts with the LLM
    - Both `google analytics` and `facebook pixel` are specifically designed to track user behavior
    - This raises the question of whether behavioral data collected by these third parties could inform how AI platforms optimize for user engagement, however, this question cannot be answered from network traffic alone since the data is encrypted.
+3.
+
+## Chrome Extension
+
+The `chrome-extension/` folder contains a Manifest V3 Chrome extension that captures browser network requests and shows them in a popup.
+
+To load it in Chrome:
+
+1. Open `chrome://extensions`
+2. Turn on Developer mode
+3. Click Load unpacked
+4. Select the `chrome-extension/` folder

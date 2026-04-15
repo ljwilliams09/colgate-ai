@@ -1,0 +1,138 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Georgia, serif;
+  background: #f6f2ea;
+  color: #2b2b2b;
+  min-width: 300px;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #ddd4c7;
+  background: #fbf9f4;
+}
+.header-title { font-size: 15px; font-weight: bold; }
+.header-sub   { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+/* ── Stats row ── */
+.stats-row {
+  display: flex;
+  border-bottom: 1px solid #ddd4c7;
+  background: #fbf9f4;
+}
+.stat {
+  flex: 1;
+  padding: 10px 14px;
+  border-right: 1px solid #ddd4c7;
+}
+.stat:last-child { border-right: none; }
+.stat-value { font-size: 20px; color: #2f7f7b; font-weight: bold; }
+.stat-label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+
+/* ── Send cards ── */
+.cards {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.send-card {
+  background: #fbf9f4;
+  border: 1px solid #ddd4c7;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+/* Top row: prompt + response size */
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+.card-prompt {
+  font-size: 13px;
+  font-style: italic;
+  color: #333;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-response {
+  text-align: right;
+  flex-shrink: 0;
+}
+.card-response-size { font-size: 13px; font-weight: bold; color: #2b2b2b; }
+.card-ttfb          { font-size: 11px; color: #999; }
+
+/* Bottom row: pills for turn mode, tool, model */
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.pill {
+  display: inline-flex;
+  flex-direction: column;
+  padding: 4px 9px;
+  border-radius: 8px;
+  font-size: 11px;
+  border: 1px solid;
+  line-height: 1.3;
+}
+.pill-label { font-weight: bold; }
+.pill-sub   { font-size: 10px; opacity: 0.75; }
+
+.pill-model {
+  background: #e8f4f0;
+  border-color: #a8d8cb;
+  color: #0a4a38;
+}
+.pill-no-tool {
+  background: #f0efeb;
+  border-color: #ccc8be;
+  color: #666;
+}
+
+/* Send label at the bottom */
+.card-footer {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #bbb;
+}
+
+/* ── Empty state ── */
+.empty {
+  color: #aaa;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 40px 16px;
+  line-height: 1.7;
+}
+
+/* ── Clear button ── */
+.btn-clear {
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd0bc;
+  background: #efe8dc;
+  color: #3f3a33;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-clear:hover { background: #e5ddd0; }
