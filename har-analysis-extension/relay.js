@@ -20,6 +20,6 @@ window.addEventListener("message", (event) => {
       payload: event.data.payload,
     });
   } catch (_) {
-    // Extension context invalidated — safe to ignore, data will be captured next time
+    // Extension context invalidated —> safe to ignore, data will be captured next time
   }
 });
