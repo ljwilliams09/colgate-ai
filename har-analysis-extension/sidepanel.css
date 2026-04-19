@@ -107,6 +107,38 @@ body {
   color: #666;
 }
 
+/* Third-party contacts section */
+.card-third-parties {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #ece6db;
+}
+.tp-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #999;
+  margin-bottom: 5px;
+}
+.tp-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.tp-chip {
+  display: inline-flex;
+  flex-direction: column;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: #f0ece4;
+  border: 1px solid #ddd4c7;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.tp-domain { font-weight: bold; color: #3a3630; }
+.tp-cat    { color: #999; font-size: 9px; }
+.tp-none   { font-size: 11px; color: #ccc; font-style: italic; }
+
 /* Send label at the bottom */
 .card-footer {
   margin-top: 6px;

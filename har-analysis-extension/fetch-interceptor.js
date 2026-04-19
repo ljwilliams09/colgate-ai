@@ -37,7 +37,7 @@
           if (content?.parts && Array.isArray(content.parts)) {
             return content.parts.filter(Boolean).join(" ").slice(0, 200);
           }
-          if (typeof content === "string") return content.slice(0, 200);
+          if (typeof content=== "string") return content.slice(0, 200);
         }
       }
     } catch (_) {}

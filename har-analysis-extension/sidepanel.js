@@ -78,6 +78,21 @@ function buildCard(d) {
        </span>`
     : "";
 
+  // Third-party contacts section
+  const contacts = Array.isArray(d.third_party_contacts) ? d.third_party_contacts : [];
+  const thirdPartyHtml = contacts.length
+    ? `<div class="card-third-parties">
+        <div class="tp-label">Third-party contacts (${contacts.length})</div>
+        <div class="tp-list">
+          ${contacts.map(c => `
+            <span class="tp-chip">
+              <span class="tp-domain">${esc(c.domain)}</span>
+              <span class="tp-cat">${esc(c.category)}</span>
+            </span>`).join("")}
+        </div>
+       </div>`
+    : `<div class="card-third-parties tp-none">No third-party contacts detected</div>`;
+
   return `
     <div class="send-card">
       <div class="card-top">
@@ -88,6 +103,7 @@ function buildCard(d) {
         </div>
       </div>
       <div class="card-meta">${modePill}${toolPill}${modelPill}</div>
+      ${thirdPartyHtml}
       <div class="card-footer">${esc(d.send_id)} · ${platform}</div>
     </div>`;
 }
@@ -103,6 +119,12 @@ function render(sends) {
   document.getElementById("avgTtfb").textContent =
     ttfbVals.length
       ? Math.round(ttfbVals.reduce((a, b) => a + b, 0) / ttfbVals.length) + " ms"
+      : "—";
+
+  const tpCounts = sends.map(s => (s.third_party_contacts || []).length);
+  document.getElementById("avgThirdParties").textContent =
+    tpCounts.length
+      ? (tpCounts.reduce((a, b) => a + b, 0) / tpCounts.length).toFixed(1)
       : "—";
 
   const cards      = document.getElementById("cards");
