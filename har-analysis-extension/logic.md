@@ -117,18 +117,16 @@ The background script manages all shared state. When it receives an `ai-capture`
 
 **File: `background.js`** *(webRequest API)*
 
-In addition to storing send data, the background script also watches **every network request** the browser makes using Chrome's `webRequest` API. This works like a browser-level TShark, it sees all traffic, not just AI requests.
+Adding on to storing send data, the background script also watches **network request** the browser makes using Chrome's `webRequest` API. This works like a browser-level TShark, it sees all traffic, not just AI requests.
 
 **How it works:**
 
 1. Every completed request gets logged to a **rolling 90-second buffer** (domain + timestamp)
-2. AI platform domains (`chatgpt.com`, `openai.com`, `claude.ai`, `anthropic.com`) are filtered out — we only want third parties
+2. AI platform domains (`chatgpt.com`, `openai.com`) are filtered out because we only want third parties
 3. When a send is captured, the buffer is scanned for all requests that happened between the send's start time and now
 4. Each unique domain is **categorized** using the [Disconnect.me tracker database](https://github.com/disconnectme/disconnect-tracking-protection) — a community-maintained list of thousands of known trackers. It is fetched once on startup and cached locally for a week
-5. If a domain isn't in the Disconnect list, a **keyword heuristic** fallback runs (e.g. if the domain contains "analytics", "track", "beacon", etc.)
+5. If a domain isn't in the Disconnect list, then a **keyword heuristic** runs to lable it a keyword rather then an unknown
 6. The resulting list of `{ domain, category }` pairs is saved as `third_party_contacts` on the send record
-
-**Why this matters:** Even a one-word prompt to ChatGPT triggers connections to Google Analytics, Datadog, and other external services. This feature makes that visible per-send.
 
 ---
 
