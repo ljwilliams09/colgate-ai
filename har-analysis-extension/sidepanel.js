@@ -16,16 +16,15 @@ function esc(str) {
     .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// Same palette + hash as dashboard.html so colors stay consistent
 const PALETTE = [
-  { bg: "#eef2ff", border: "#c0caff", color: "#3a4abd" },
-  { bg: "#fff7e6", border: "#f5c876", color: "#7a4f00" },
-  { bg: "#fff0f6", border: "#f5a0c8", color: "#7a0040" },
-  { bg: "#edfaf3", border: "#7dd9a8", color: "#0a5c39" },
-  { bg: "#f3edff", border: "#c8a8f5", color: "#4a0a7a" },
-  { bg: "#fff4ed", border: "#f5b87a", color: "#7a3300" },
-  { bg: "#edf8ff", border: "#7acef5", color: "#003a5c" },
-  { bg: "#fdfaed", border: "#d4c876", color: "#5c4f00" },
+  { bg: "#1a1333", border: "#6d28d9", color: "#c4b5fd" },
+  { bg: "#0f1e2e", border: "#1e4d6b", color: "#7dd3fc" },
+  { bg: "#1a1130", border: "#5b21b6", color: "#a78bfa" },
+  { bg: "#0e1f1a", border: "#065f46", color: "#6ee7b7" },
+  { bg: "#1e1030", border: "#7c3aed", color: "#ddd6fe" },
+  { bg: "#1a1020", border: "#9d174d", color: "#f9a8d4" },
+  { bg: "#0f1e2e", border: "#0369a1", color: "#38bdf8" },
+  { bg: "#1a1333", border: "#4c1d95", color: "#e9d5ff" },
 ];
 const colorCache = {};
 function hashStr(str) {
@@ -39,15 +38,16 @@ function getStyle(uc) {
 }
 
 const TOOL_SUBTITLE = {
-  text:     "memory only",
-  search:   "web search",
-  shopping: "shopping mode",
+  text:        "memory only",
+  search:      "web search",
+  shopping:    "shopping mode",
+  multimodal:  "file / image input",
 };
 
 function buildCard(d) {
   const uc       = (d.turn_use_case || "unknown").toLowerCase();
   const s        = getStyle(uc);
-  const toolSub  = TOOL_SUBTITLE[uc] || uc;
+  const toolSub  = TOOL_SUBTITLE[uc] || "";
   const platform = d.platform === "claude" ? "Claude" : "ChatGPT";
   const preview  = d.prompt_preview
     ? `"${esc(d.prompt_preview).slice(0, 60)}${d.prompt_preview.length > 60 ? "…" : ""}"`

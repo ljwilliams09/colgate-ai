@@ -4,7 +4,7 @@
 
 (() => {
   // Debug flag — logs to console so you can see what's being captured
-  const DEBUG = true;
+  const DEBUG = false;
   function dbg(...args) { if (DEBUG) console.log("[AI Capture]", ...args); }
 
   // Mark that this script loaded so we can verify in DevTools
