@@ -1,25 +1,28 @@
 // ── relay.js (runs in ISOLATED world) ────────────────────────────────────
-// fetch-interceptor.js runs in the page's MAIN world and can't touch any
-// chrome.* APIs. This script runs in the extension's ISOLATED world, which
-// can. It listens for the postMessage that fetch-interceptor.js fires after
-// parsing a send, then forwards it to the background service worker.
+//
+// Purpose:
+//   fetch-interceptor.js runs in the page's MAIN world so it can patch
+//   window.fetch, but MAIN world scripts can't use chrome.* APIs.
+//   Solution: this file runs in the extension's ISOLATED world, which CAN use chrome.*,
+//   Its a bridge: it picks up the postMessage from fetch-interceptor
+//   and forwards the captured data to the background service worker.
+
 
 window.addEventListener("message", (event) => {
-  // Only accept messages from the same window (not iframes or other origins)
+
   if (event.source !== window) return;
 
-  // Check our flag so we don't accidentally process unrelated postMessages
+  // Ignore any postMessages that aren't from our fetch interceptor
   if (!event.data?.__aiCapture) return;
 
-  // Forward to the background service worker
-  // Wrapped in try/catch because the extension context can become invalid
-  // if the service worker is sleeping — it'll restart on the next message
+  // Forward the captured payload to background.js via the chrome messaging API
   try {
     chrome.runtime.sendMessage({
       type: "ai-capture",
       payload: event.data.payload,
     });
   } catch (_) {
-    // Extension context invalidated —> safe to ignore, data will be captured next time
+    // happens if the service worker was force-killed and the extension context became invalid.
+    // The next send will go through normally
   }
 });

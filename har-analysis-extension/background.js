@@ -1,9 +1,9 @@
 // ── background.js (service worker) ───────────────────────────────────────
 // Receives captured send data from relay.js, stores it in chrome.storage.local,
-// and serves it to the popup when requested.
+// and serves it to the side panel when requested.
 // Also manages the badge count on the extension icon.
 // Also tracks third-party domains per send using the Disconnect.me tracker list.
-//Used AI
+//Used AI to help code this! 
 
 // ── Disconnect.me tracker database ────────────────────────────────────────
 
@@ -50,6 +50,7 @@ async function loadDisconnectList() {
   }
 }
 
+//What do we think of this?? Is it too hardcoded? 
 // Keyword-based fallback for domains not in Disconnect list
 const KEYWORD_RULES = [
   [/analytic|tracking|tracker|telemetr|beacon|stats\./i, "analytics"],
@@ -78,7 +79,9 @@ function categorizeDomain(domain) {
 
 // ── Third-party request buffer ─────────────────────────────────────────────
 
-const AI_DOMAINS       = ["chatgpt.com", "openai.com", "claude.ai", "anthropic.com"];
+//right now it only does chatGPT and not calude!! 
+
+const AI_DOMAINS       = ["chatgpt.com", "openai.com"];
 const REQUEST_BUFFER_MS = 90_000;
 const recentRequests   = []; // { domain, timestamp }
 

@@ -15,10 +15,13 @@
 
   // URL patterns for AI conversation endpoints
   const CHATGPT_PATTERN = /backend-api\/(?:f\/)?conversation|\/responses|chat\/completions/i;
-  const CLAUDE_PATTERN  = /claude\.ai\/api\/.*\/chat_conversations\//i;
+ 
+  //need to fix this later 
+  // const CLAUDE_PATTERN  = /claude\.ai\/api\/.*\/chat_conversations\//i;
 
   // ── Prompt extraction ──────────────────────────────────────────────────
 
+  // Pulls the user's prompt text out of the request body (first 200 chars)
   function extractPromptPreview(bodyText, platform) {
     try {
       const parsed = JSON.parse(bodyText);
@@ -46,6 +49,7 @@
 
   // ── SSE stream parser ──────────────────────────────────────────────────
 
+  // Reads the SSE response stream and gets the tool, model, turn type, and byte count, then posts the result to relay.js
   async function processStream(stream, meta) {
     const decoder = new TextDecoder("utf-8", { stream: true });
     const reader  = stream.getReader();
@@ -109,7 +113,7 @@
       dbg("stream read error:", e.message);
     }
 
-    // If we got no SSE events at all, this was a background request — not a real user send
+    // If we got no SSE events at all, this was a background request —> not a real user send
     if (sse_event_count === 0) {
       dbg("skipping — no SSE events (background request)");
       return;
@@ -147,12 +151,13 @@
 
   // ── Patched fetch ──────────────────────────────────────────────────────
 
+  // Replaces window.fetch —> intercepts matching AI POST requests, clones the response, and passes it to processStream
   window.fetch = async function (input, init) {
     const url    = typeof input === "string" ? input : (input?.url ?? "");
     const method = ((init?.method ?? (input?.method ?? "GET"))).toUpperCase();
 
     const isChatGPT = CHATGPT_PATTERN.test(url);
-    const isClaude  = CLAUDE_PATTERN.test(url);
+    // const isClaude  = CLAUDE_PATTERN.test(url);
 
     if (!(isChatGPT || isClaude) || method !== "POST") {
       return ORIGINAL_FETCH(input, init);
@@ -174,9 +179,7 @@
       dbg("no response body, skipping");
       return response;
     }
-
-    // Use clone() instead of tee() — returns the original response untouched
-    // so ChatGPT's frontend works normally
+    
     const cloned = response.clone();
     processStream(cloned.body, {
       platform, url, capturedAt: callTime, ttfb_ms, prompt_preview,
