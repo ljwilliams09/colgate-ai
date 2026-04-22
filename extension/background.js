@@ -3,14 +3,14 @@
 // and serves it to the side panel when requested.
 // Also manages the badge count on the extension icon.
 // Also tracks third-party domains per send using the Disconnect.me tracker list.
-//Used AI to help code this! 
+//Used AI to help code this!
 
 // ── Disconnect.me tracker database ────────────────────────────────────────
 
 const DISCONNECT_URL =
   "https://raw.githubusercontent.com/disconnectme/disconnect-tracking-protection/master/services.json";
 const DISCONNECT_CACHE_KEY = "disconnectDomainMap";
-const DISCONNECT_CACHE_AGE  = 7 * 24 * 60 * 60 * 1000; // refresh weekly
+const DISCONNECT_CACHE_AGE = 7 * 24 * 60 * 60 * 1000; // refresh weekly
 
 // domainMap: { "example.com": "Advertising" }
 let domainMap = {};
@@ -18,16 +18,16 @@ let domainMap = {};
 async function loadDisconnectList() {
   // Try cache first
   const stored = await chrome.storage.local.get(DISCONNECT_CACHE_KEY);
-  const cache  = stored[DISCONNECT_CACHE_KEY];
+  const cache = stored[DISCONNECT_CACHE_KEY];
   if (cache && Date.now() - cache.fetchedAt < DISCONNECT_CACHE_AGE) {
     domainMap = cache.map;
     return;
   }
 
   try {
-    const res  = await fetch(DISCONNECT_URL);
+    const res = await fetch(DISCONNECT_URL);
     const json = await res.json();
-    const map  = {};
+    const map = {};
 
     for (const [category, companies] of Object.entries(json.categories || {})) {
       for (const company of Object.values(companies)) {
@@ -50,15 +50,15 @@ async function loadDisconnectList() {
   }
 }
 
-//What do we think of this?? Is it too hardcoded? 
+//What do we think of this?? Is it too hardcoded?
 // Keyword-based fallback for domains not in Disconnect list
 const KEYWORD_RULES = [
   [/analytic|tracking|tracker|telemetr|beacon|stats\./i, "analytics"],
-  [/monitor|sentry|datadog|newrelic|bugsnag|rollbar/i,   "monitoring"],
-  [/ads\.|advert|doubleclick|pixel\.|pagead/i,           "advertising"],
-  [/intercom|zendesk|freshdesk|helpscout/i,              "support"],
-  [/hotjar|fullstory|logrocket|mouseflow/i,              "session recording"],
-  [/segment\.|mixpanel|amplitude|heap\./i,               "analytics"],
+  [/monitor|sentry|datadog|newrelic|bugsnag|rollbar/i, "monitoring"],
+  [/ads\.|advert|doubleclick|pixel\.|pagead/i, "advertising"],
+  [/intercom|zendesk|freshdesk|helpscout/i, "support"],
+  [/hotjar|fullstory|logrocket|mouseflow/i, "session recording"],
+  [/segment\.|mixpanel|amplitude|heap\./i, "analytics"],
 ];
 
 function categorizeDomain(domain) {
@@ -79,20 +79,23 @@ function categorizeDomain(domain) {
 
 // ── Third-party request buffer ─────────────────────────────────────────────
 
-//right now it only does chatGPT and not calude!! 
+//right now it only does chatGPT and not claude!!
 
-const AI_DOMAINS       = ["chatgpt.com", "openai.com", "claude.ai", "anthropic.com"];
+const AI_DOMAINS = ["chatgpt.com", "openai.com", "claude.ai", "anthropic.com"];
 const REQUEST_BUFFER_MS = 90_000;
-const recentRequests   = []; // { domain, timestamp }
+const recentRequests = []; // { domain, timestamp }
 
 function isAiDomain(domain) {
-  return AI_DOMAINS.some(d => domain === d || domain.endsWith("." + d));
+  return AI_DOMAINS.some((d) => domain === d || domain.endsWith("." + d));
 }
 
 chrome.webRequest.onCompleted.addListener(
   (details) => {
     const now = Date.now();
-    while (recentRequests.length && recentRequests[0].timestamp < now - REQUEST_BUFFER_MS) {
+    while (
+      recentRequests.length &&
+      recentRequests[0].timestamp < now - REQUEST_BUFFER_MS
+    ) {
       recentRequests.shift();
     }
     try {
@@ -101,13 +104,13 @@ chrome.webRequest.onCompleted.addListener(
       recentRequests.push({ domain, timestamp: now });
     } catch (_) {}
   },
-  { urls: ["<all_urls>"] }
+  { urls: ["<all_urls>"] },
 );
 
 function collectThirdParties(capturedAt) {
-  const now  = Date.now();
+  const now = Date.now();
   const seen = new Set();
-  const out  = [];
+  const out = [];
   for (const r of recentRequests) {
     if (r.timestamp < capturedAt || r.timestamp > now) continue;
     if (seen.has(r.domain)) continue;
@@ -120,17 +123,19 @@ function collectThirdParties(capturedAt) {
 // ── Extension core ─────────────────────────────────────────────────────────
 
 // Open the side panel when the extension icon is clicked
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+chrome.sidePanel
+  .setPanelBehavior({ openPanelOnActionClick: true })
+  .catch(() => {});
 
 const STORAGE_KEY = "aiCaptureSends";
-const MAX_SENDS   = 100;
+const MAX_SENDS = 100;
 
-let sends   = [];
+let sends = [];
 let sendIdx = 0;
 
 const ready = Promise.all([
   chrome.storage.local.get(STORAGE_KEY).then((result) => {
-    sends   = Array.isArray(result[STORAGE_KEY]) ? result[STORAGE_KEY] : [];
+    sends = Array.isArray(result[STORAGE_KEY]) ? result[STORAGE_KEY] : [];
     sendIdx = sends.length;
     updateBadge();
   }),
@@ -139,7 +144,9 @@ const ready = Promise.all([
 
 function updateBadge() {
   chrome.action.setBadgeBackgroundColor({ color: "#2f7f7b" });
-  chrome.action.setBadgeText({ text: sends.length ? String(sends.length) : "" });
+  chrome.action.setBadgeText({
+    text: sends.length ? String(sends.length) : "",
+  });
 }
 
 async function persist() {
@@ -148,10 +155,11 @@ async function persist() {
   chrome.runtime.sendMessage({ type: "sends-updated" }).catch(() => {});
 }
 
-function ensureReady() { return ready; }
+function ensureReady() {
+  return ready;
+}
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-
   if (message.type === "ai-capture") {
     ensureReady().then(() => {
       sendIdx++;
@@ -169,13 +177,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.type === "get-sends") {
-    ensureReady().then(() => { sendResponse({ sends }); });
+    ensureReady().then(() => {
+      sendResponse({ sends });
+    });
     return true;
   }
 
   if (message.type === "clear-sends") {
     ensureReady().then(async () => {
-      sends   = [];
+      sends = [];
       sendIdx = 0;
       await chrome.storage.local.remove(STORAGE_KEY);
       updateBadge();

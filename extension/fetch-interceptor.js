@@ -87,11 +87,14 @@
   function isLikelyChatGptUserSend(bodyText) {
     try {
       const parsed = JSON.parse(bodyText);
+      // if the body text can't be parsed, return false
       if (parsed?.action && parsed.action !== "next") return false;
 
       const messages = parsed?.messages;
+      // if messages is not an array, or empty, return false
       if (!Array.isArray(messages) || messages.length === 0) return false;
 
+      // check each element in messages for a role to be user, if not, the return false - some will check if any elements in messsages is true
       return messages.some((msg) => {
         const role = msg?.author?.role || msg?.role || "";
         if (role !== "user") return false;
