@@ -81,7 +81,7 @@ function categorizeDomain(domain) {
 
 //right now it only does chatGPT and not calude!! 
 
-const AI_DOMAINS       = ["chatgpt.com", "openai.com"];
+const AI_DOMAINS       = ["chatgpt.com", "openai.com", "claude.ai", "anthropic.com"];
 const REQUEST_BUFFER_MS = 90_000;
 const recentRequests   = []; // { domain, timestamp }
 

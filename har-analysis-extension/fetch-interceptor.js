@@ -16,11 +16,44 @@
   const ORIGINAL_FETCH = window.fetch.bind(window);
 
   // URL patterns for AI conversation endpoints
-  const CHATGPT_PATTERN =
-    /backend-api\/(?:f\/)?conversation|\/responses|chat\/completions/i;
+  const CHATGPT_ALLOWED_PATHS = new Set([
+    "/backend-anon/f/conversation",
+    "/backend-api/f/conversation",
+    "/backend-api/conversation",
+  ]);
+  const CLAUDE_PATH_PATTERN =
+    /\/api\/organizations\/[^/]+\/chat_conversations\/[^/]+\/completion(?:\/)?(?:$|\?)/i;
+  const ANTHROPIC_PATH_PATTERN =
+    /\/v1\/(?:messages|complete|responses)(?:\/)?(?:$|\?)/i;
 
-  //need to fix this later
-  // const CLAUDE_PATTERN  = /claude\.ai\/api\/.*\/chat_conversations\//i;
+  function parseUrl(input) {
+    try {
+      return new URL(input, window.location.href);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function detectPlatform(urlString) {
+    const parsed = parseUrl(urlString);
+    if (!parsed) return { isChatGPT: false, isClaude: false, parsed: null };
+
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+    const pathWithQuery = `${parsed.pathname}${parsed.search || ""}`;
+
+    const isChatGPTHost = host === "chatgpt.com";
+    const isClaudeHost = host === "claude.ai" || host.endsWith(".claude.ai");
+    const isAnthropicHost =
+      host === "api.anthropic.com" || host.endsWith(".anthropic.com");
+
+    const isChatGPT =
+      isChatGPTHost && CHATGPT_ALLOWED_PATHS.has(parsed.pathname);
+    const isClaude =
+      (isClaudeHost && CLAUDE_PATH_PATTERN.test(pathWithQuery)) ||
+      (isAnthropicHost && ANTHROPIC_PATH_PATTERN.test(pathWithQuery));
+
+    return { isChatGPT, isClaude, parsed };
+  }
 
   // ── Prompt extraction ──────────────────────────────────────────────────
 
@@ -51,6 +84,27 @@
     return "";
   }
 
+  function isLikelyChatGptUserSend(bodyText) {
+    try {
+      const parsed = JSON.parse(bodyText);
+      if (parsed?.action && parsed.action !== "next") return false;
+
+      const messages = parsed?.messages;
+      if (!Array.isArray(messages) || messages.length === 0) return false;
+
+      return messages.some((msg) => {
+        const role = msg?.author?.role || msg?.role || "";
+        if (role !== "user") return false;
+        const content = msg?.content;
+        if (typeof content === "string") return content.trim().length > 0;
+        if (Array.isArray(content?.parts)) return content.parts.length > 0;
+        return Boolean(content);
+      });
+    } catch (_) {
+      return false;
+    }
+  }
+
   // ── SSE stream parser ──────────────────────────────────────────────────
 
   // Reads the SSE response stream and gets the tool, model, turn type, and byte count, then posts the result to relay.js
@@ -75,12 +129,13 @@
         response_bytes += value.byteLength;
         lineBuffer += decoder.decode(value, { stream: true });
 
-        const lines = lineBuffer.split("\n");
+        const lines = lineBuffer.split(/\r?\n/);
         lineBuffer = lines.pop(); // keep incomplete last line
 
         for (const line of lines) {
-          if (!line.startsWith("data:")) continue;
-          const raw = line.slice(5).trim();
+          const trimmed = line.trimStart();
+          if (!trimmed.startsWith("data:")) continue;
+          const raw = trimmed.slice(5).trim();
           if (raw === "[DONE]") continue;
 
           sse_event_count++;
@@ -115,9 +170,12 @@
               server_fetched_urls.push(u);
           }
 
-          if (type === "message_start" && obj.message?.model) {
+          if (type === "message_start" && obj.message?.model)
             model_slug = obj.message.model;
-          }
+          if (!model_slug && typeof obj.model === "string")
+            model_slug = obj.model;
+          if (!model_slug && typeof obj.model_slug === "string")
+            model_slug = obj.model_slug;
         }
       }
 
@@ -126,9 +184,9 @@
       dbg("stream read error:", e.message);
     }
 
-    // If we got no SSE events at all, this was a background request —> not a real user send
-    if (sse_event_count === 0) {
-      dbg("skipping — no SSE events (background request)");
+    // Claude streams can omit ChatGPT-style metadata/SSE payloads; keep non-empty responses.
+    if (sse_event_count === 0 && response_bytes === 0) {
+      dbg("skipping — empty response stream");
       return;
     }
 
@@ -180,16 +238,20 @@
     const url = typeof input === "string" ? input : (input?.url ?? "");
     const method = (init?.method ?? input?.method ?? "GET").toUpperCase();
 
-    const isChatGPT = CHATGPT_PATTERN.test(url);
-    // const isClaude  = CLAUDE_PATTERN.test(url);
+    const { isChatGPT, isClaude, parsed } = detectPlatform(url);
 
     if (!(isChatGPT || isClaude) || method !== "POST") {
       return ORIGINAL_FETCH(input, init);
     }
 
-    dbg("intercepted POST:", url);
+    dbg("intercepted POST:", parsed?.href || url);
 
     const bodyText = typeof init?.body === "string" ? init.body : "";
+    if (isChatGPT && !isLikelyChatGptUserSend(bodyText)) {
+      dbg("skipping ChatGPT POST: not a user send payload");
+      return ORIGINAL_FETCH(input, init);
+    }
+
     const platform = isChatGPT ? "chatgpt" : "claude";
     const prompt_preview = extractPromptPreview(bodyText, platform);
 
@@ -207,7 +269,7 @@
     const cloned = response.clone();
     processStream(cloned.body, {
       platform,
-      url,
+      url: parsed?.href || url,
       capturedAt: callTime,
       ttfb_ms,
       prompt_preview,
