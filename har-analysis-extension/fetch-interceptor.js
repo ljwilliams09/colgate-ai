@@ -5,7 +5,9 @@
 (() => {
   // Debug flag — logs to console so you can see what's being captured
   const DEBUG = false;
-  function dbg(...args) { if (DEBUG) console.log("[AI Capture]", ...args); }
+  function dbg(...args) {
+    if (DEBUG) console.log("[AI Capture]", ...args);
+  }
 
   // Mark that this script loaded so we can verify in DevTools
   window.__aiCaptureLoaded = true;
@@ -14,9 +16,10 @@
   const ORIGINAL_FETCH = window.fetch.bind(window);
 
   // URL patterns for AI conversation endpoints
-  const CHATGPT_PATTERN = /backend-api\/(?:f\/)?conversation|\/responses|chat\/completions/i;
- 
-  //need to fix this later 
+  const CHATGPT_PATTERN =
+    /backend-api\/(?:f\/)?conversation|\/responses|chat\/completions/i;
+
+  //need to fix this later
   // const CLAUDE_PATTERN  = /claude\.ai\/api\/.*\/chat_conversations\//i;
 
   // ── Prompt extraction ──────────────────────────────────────────────────
@@ -27,7 +30,8 @@
       const parsed = JSON.parse(bodyText);
 
       if (platform === "claude") {
-        if (typeof parsed.prompt === "string") return parsed.prompt.slice(0, 200);
+        if (typeof parsed.prompt === "string")
+          return parsed.prompt.slice(0, 200);
       }
 
       const messages = parsed.messages;
@@ -40,7 +44,7 @@
           if (content?.parts && Array.isArray(content.parts)) {
             return content.parts.filter(Boolean).join(" ").slice(0, 200);
           }
-          if (typeof content=== "string") return content.slice(0, 200);
+          if (typeof content === "string") return content.slice(0, 200);
         }
       }
     } catch (_) {}
@@ -52,15 +56,15 @@
   // Reads the SSE response stream and gets the tool, model, turn type, and byte count, then posts the result to relay.js
   async function processStream(stream, meta) {
     const decoder = new TextDecoder("utf-8", { stream: true });
-    const reader  = stream.getReader();
+    const reader = stream.getReader();
 
-    let lineBuffer     = "";
+    let lineBuffer = "";
     let response_bytes = 0;
     let sse_event_count = 0;
-    let tool_invoked   = false;
-    let tool_name      = null;
-    let turn_use_case  = null;
-    let model_slug     = null;
+    let tool_invoked = false;
+    let tool_name = null;
+    let turn_use_case = null;
+    let model_slug = null;
     const server_fetched_urls = [];
 
     try {
@@ -82,23 +86,33 @@
           sse_event_count++;
 
           let obj;
-          try { obj = JSON.parse(raw); } catch (_) { continue; }
+          try {
+            obj = JSON.parse(raw);
+          } catch (_) {
+            continue;
+          }
           if (!obj || typeof obj !== "object") continue;
 
           const type = obj.type || "";
 
           if (type === "server_ste_metadata") {
             const m = obj.metadata || {};
-            tool_invoked  = Boolean(m.tool_invoked);
-            tool_name     = m.tool_name    || null;
+            tool_invoked = Boolean(m.tool_invoked);
+            tool_name = m.tool_name || null;
             turn_use_case = m.turn_use_case || null;
-            model_slug    = m.model_slug   || null;
-            dbg("metadata found:", { tool_invoked, tool_name, turn_use_case, model_slug });
+            model_slug = m.model_slug || null;
+            dbg("metadata found:", {
+              tool_invoked,
+              tool_name,
+              turn_use_case,
+              model_slug,
+            });
           }
 
           if (type === "url_moderation") {
             const u = obj.url_moderation_result?.full_url;
-            if (u && !server_fetched_urls.includes(u)) server_fetched_urls.push(u);
+            if (u && !server_fetched_urls.includes(u))
+              server_fetched_urls.push(u);
           }
 
           if (type === "message_start" && obj.message?.model) {
@@ -108,7 +122,6 @@
       }
 
       lineBuffer += decoder.decode(); // flush remaining bytes
-
     } catch (e) {
       dbg("stream read error:", e.message);
     }
@@ -122,39 +135,50 @@
     // Default turn_use_case to "text" if the stream had no metadata event
     if (!turn_use_case) turn_use_case = "text";
 
-    dbg("send captured:", { turn_use_case, tool_name, model_slug, ttfb_ms: meta.ttfb_ms });
+    dbg("send captured:", {
+      turn_use_case,
+      tool_name,
+      model_slug,
+      ttfb_ms: meta.ttfb_ms,
+    });
 
-    window.postMessage({
-      __aiCapture: true,
-      payload: {
-        platform:   meta.platform,
-        url:        meta.url,
-        capturedAt: meta.capturedAt,
-        ttfb_ms:    meta.ttfb_ms,
-        prompt_preview: meta.prompt_preview,
-        response_bytes,
-        sse_event_count,
-        tool_invoked,
-        tool_name,
-        turn_use_case,
-        model_slug,
-        server_fetched_urls: server_fetched_urls.map(u => {
-          try {
-            return { url: u, domain: new URL(u).hostname.replace(/^www\./, "") };
-          } catch (_) {
-            return { url: u, domain: u };
-          }
-        }),
+    window.postMessage(
+      {
+        __aiCapture: true,
+        payload: {
+          platform: meta.platform,
+          url: meta.url,
+          capturedAt: meta.capturedAt,
+          ttfb_ms: meta.ttfb_ms,
+          prompt_preview: meta.prompt_preview,
+          response_bytes,
+          sse_event_count,
+          tool_invoked,
+          tool_name,
+          turn_use_case,
+          model_slug,
+          server_fetched_urls: server_fetched_urls.map((u) => {
+            try {
+              return {
+                url: u,
+                domain: new URL(u).hostname.replace(/^www\./, ""),
+              };
+            } catch (_) {
+              return { url: u, domain: u };
+            }
+          }),
+        },
       },
-    }, "*");
+      "*",
+    );
   }
 
   // ── Patched fetch ──────────────────────────────────────────────────────
 
   // Replaces window.fetch —> intercepts matching AI POST requests, clones the response, and passes it to processStream
   window.fetch = async function (input, init) {
-    const url    = typeof input === "string" ? input : (input?.url ?? "");
-    const method = ((init?.method ?? (input?.method ?? "GET"))).toUpperCase();
+    const url = typeof input === "string" ? input : (input?.url ?? "");
+    const method = (init?.method ?? input?.method ?? "GET").toUpperCase();
 
     const isChatGPT = CHATGPT_PATTERN.test(url);
     // const isClaude  = CLAUDE_PATTERN.test(url);
@@ -171,7 +195,7 @@
 
     const callTime = Date.now();
     const response = await ORIGINAL_FETCH(input, init);
-    const ttfb_ms  = Date.now() - callTime;
+    const ttfb_ms = Date.now() - callTime;
 
     dbg("response received, status:", response.status, "ttfb:", ttfb_ms + "ms");
 
@@ -179,13 +203,16 @@
       dbg("no response body, skipping");
       return response;
     }
-    
+
     const cloned = response.clone();
     processStream(cloned.body, {
-      platform, url, capturedAt: callTime, ttfb_ms, prompt_preview,
-    }).catch(e => dbg("processStream error:", e.message));
+      platform,
+      url,
+      capturedAt: callTime,
+      ttfb_ms,
+      prompt_preview,
+    }).catch((e) => dbg("processStream error:", e.message));
 
     return response;
   };
-
 })();
