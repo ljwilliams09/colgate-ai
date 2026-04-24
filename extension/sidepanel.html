@@ -21,19 +21,22 @@
       <div class="stat-value" id="totalSends">0</div>
       <div class="stat-label">Sends</div>
     </div>
-    <div class="stat">
+    <div class="stat" title="% of sends where the AI used a tool (e.g. web search, file analysis)">
       <div class="stat-value" id="toolRate">—</div>
-      <div class="stat-label">Tool rate</div>
+      <div class="stat-label">Used a tool</div>
     </div>
-    <div class="stat">
+    <div class="stat" title="Avg time from sending your message until the first word appears">
       <div class="stat-value" id="avgTtfb">—</div>
-      <div class="stat-label">Avg TTFB</div>
+      <div class="stat-label">Avg response time</div>
     </div>
     <div class="stat">
       <div class="stat-value" id="avgThirdParties">—</div>
       <div class="stat-label">Avg 3rd parties</div>
     </div>
   </div>
+
+  <!-- Per-tool breakdown -->
+  <div id="toolBreakdown"></div>
 
   <!-- Send cards -->
   <div class="cards" id="cards">

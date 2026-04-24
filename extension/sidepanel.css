@@ -36,6 +36,41 @@ body {
 .stat-value { font-size: 20px; color: #c4a8ff; font-weight: bold; }
 .stat-label { font-size: 10px; color: #cec6f0; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; font-weight: 700; }
 
+/* ── Per-tool breakdown ── */
+.tool-breakdown {
+  padding: 10px 16px;
+  border-bottom: 1px solid #2a2040;
+  background: #110f1a;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tb-header {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #cec6f0;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.tb-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+.tb-pill {
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid;
+  font-weight: bold;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.tb-sub    { color: #9d8ec0; flex: 1; font-size: 10px; }
+.tb-count  { color: #e8d8ff; font-weight: 600; flex-shrink: 0; }
+.tb-metric { color: #c4a8ff; font-weight: 600; flex-shrink: 0; min-width: 60px; text-align: right; }
+
 /* ── Send cards ── */
 .cards {
   padding: 10px 12px;

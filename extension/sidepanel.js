@@ -37,17 +37,14 @@ function getStyle(uc) {
   return colorCache[uc];
 }
 
-const TOOL_SUBTITLE = {
-  text:        "memory only",
-  search:      "web search",
-  shopping:    "shopping mode",
-  multimodal:  "file / image input",
-};
+function toolSubtitle(uc) {
+  return uc.replace(/_/g, " ");
+}
 
 function buildCard(d) {
   const uc       = (d.turn_use_case || "unknown").toLowerCase();
   const s        = getStyle(uc);
-  const toolSub  = TOOL_SUBTITLE[uc] || "";
+  const toolSub  = toolSubtitle(uc);
   const platform = d.platform === "claude" ? "Claude" : "ChatGPT";
   const preview  = d.prompt_preview
     ? `"${esc(d.prompt_preview).slice(0, 60)}${d.prompt_preview.length > 60 ? "…" : ""}"`
@@ -99,12 +96,46 @@ function buildCard(d) {
         <div class="card-prompt">${preview}</div>
         <div class="card-response">
           <div class="card-response-size">${fmtBytes(d.response_bytes)}</div>
-          <div class="card-ttfb">TTFB ${d.ttfb_ms != null ? Math.round(d.ttfb_ms) + " ms" : "—"}</div>
+          <div class="card-ttfb" title="Time To First Byte — how long from sending your message until the AI started responding">TTFB ${d.ttfb_ms != null ? Math.round(d.ttfb_ms) + " ms" : "—"}</div>
         </div>
       </div>
       <div class="card-meta">${modePill}${toolPill}${modelPill}</div>
       ${thirdPartyHtml}
       <div class="card-footer">${esc(d.send_id)} · ${platform}</div>
+    </div>`;
+}
+
+function renderToolBreakdown(sends) {
+  const container = document.getElementById("toolBreakdown");
+  if (!sends.length) { container.innerHTML = ""; return; }
+
+  // Group sends by turn_use_case
+  const groups = {};
+  for (const s of sends) {
+    const key = (s.turn_use_case || "unknown").toLowerCase();
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(s);
+  }
+
+  const rows = Object.entries(groups).map(([uc, items]) => {
+    const style    = getStyle(uc);
+    const avgTtfb  = Math.round(items.map(s => s.ttfb_ms).filter(Boolean).reduce((a, b) => a + b, 0) / (items.filter(s => s.ttfb_ms != null).length || 1));
+    const avgBytes = Math.round(items.map(s => s.response_bytes || 0).reduce((a, b) => a + b, 0) / items.length);
+    const subtitle = toolSubtitle(uc);
+    return `
+      <div class="tb-row">
+        <span class="tb-pill" style="background:${style.bg};border-color:${style.border};color:${style.color}">${esc(uc)}</span>
+        <span class="tb-sub">${esc(subtitle)}</span>
+        <span class="tb-count">${items.length} send${items.length !== 1 ? "s" : ""}</span>
+        <span class="tb-metric" title="Average time to first byte for this tool">${avgTtfb} ms</span>
+        <span class="tb-metric">${fmtBytes(avgBytes)}</span>
+      </div>`;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="tool-breakdown">
+      <div class="tb-header">Breakdown by tool</div>
+      ${rows}
     </div>`;
 }
 
@@ -126,6 +157,8 @@ function render(sends) {
     tpCounts.length
       ? (tpCounts.reduce((a, b) => a + b, 0) / tpCounts.length).toFixed(1)
       : "—";
+
+  renderToolBreakdown(sends);
 
   const cards      = document.getElementById("cards");
   const emptyState = document.getElementById("emptyState");
