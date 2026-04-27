@@ -15,34 +15,74 @@
     <button class="btn-clear" id="clearBtn">Clear all</button>
   </div>
 
-  <!-- Summary stats -->
-  <div class="stats-row">
-    <div class="stat">
-      <div class="stat-value" id="totalSends">0</div>
-      <div class="stat-label">Sends</div>
+  <!-- Tab navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" data-tab="tab-captures">Captures</button>
+    <button class="tab-btn" data-tab="tab-trackers">Trackers</button>
+  </div>
+
+  <!-- Captures tab -->
+  <div id="tab-captures" class="tab-panel active">
+    <!-- Summary stats -->
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-value" id="totalSends">0</div>
+        <div class="stat-label">Sends</div>
+      </div>
+      <div class="stat" title="% of sends where the AI used a tool (e.g. web search, file analysis)">
+        <div class="stat-value" id="toolRate">—</div>
+        <div class="stat-label">Used a tool</div>
+      </div>
+      <div class="stat" title="Avg time from sending your message until the first word appears">
+        <div class="stat-value" id="avgTtfb">—</div>
+        <div class="stat-label">Avg response time</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="avgThirdParties">—</div>
+        <div class="stat-label">Avg 3rd parties</div>
+      </div>
     </div>
-    <div class="stat" title="% of sends where the AI used a tool (e.g. web search, file analysis)">
-      <div class="stat-value" id="toolRate">—</div>
-      <div class="stat-label">Used a tool</div>
-    </div>
-    <div class="stat" title="Avg time from sending your message until the first word appears">
-      <div class="stat-value" id="avgTtfb">—</div>
-      <div class="stat-label">Avg response time</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value" id="avgThirdParties">—</div>
-      <div class="stat-label">Avg 3rd parties</div>
+
+    <!-- Per-tool breakdown -->
+    <div id="toolBreakdown"></div>
+
+    <!-- Send cards -->
+    <div class="cards" id="cards">
+      <div class="empty" id="emptyState">
+        No sends captured yet.<br>
+        Chat with ChatGPT or Claude and it will show up here.
+      </div>
     </div>
   </div>
 
-  <!-- Per-tool breakdown -->
-  <div id="toolBreakdown"></div>
+  <!-- Trackers tab -->
+  <div id="tab-trackers" class="tab-panel">
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-value tr-alert-value" id="tr-before-count">—</div>
+        <div class="stat-label">Before you typed</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="tr-total-pings">—</div>
+        <div class="stat-label">Total pings</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="tr-companies">—</div>
+        <div class="stat-label">Companies</div>
+      </div>
+    </div>
 
-  <!-- Send cards -->
-  <div class="cards" id="cards">
-    <div class="empty" id="emptyState">
-      No sends captured yet.<br>
-      Chat with ChatGPT or Claude and it will show up here.
+    <!-- Alert banner -->
+    <div class="tr-alert-banner" id="tr-alert" style="display:none"></div>
+
+    <!-- Platform sections -->
+    <div class="tr-platforms" id="tr-platforms"></div>
+
+    <!-- Footer -->
+    <div class="tr-footer">
+      <span class="tr-session-time" id="tr-session-time">No session yet</span>
+      <button class="btn-clear" id="tr-clearBtn">Clear log</button>
     </div>
   </div>
 

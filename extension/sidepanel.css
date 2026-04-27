@@ -211,3 +211,129 @@ body {
   white-space: nowrap;
 }
 .btn-clear:hover { background: #2a2040; }
+
+/* ── Tab navigation ── */
+.tab-nav {
+  display: flex;
+  background: #110f1a;
+  border-bottom: 1px solid #2a2040;
+}
+.tab-btn {
+  flex: 1;
+  padding: 9px 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #9d8ec0;
+  cursor: pointer;
+}
+.tab-btn.active {
+  color: #c4a8ff;
+  border-bottom-color: #c4a8ff;
+}
+.tab-btn:hover { color: #e8d8ff; }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Trackers tab ── */
+.tr-alert-value { color: #f87171; }
+
+.tr-alert-banner {
+  margin: 10px 12px;
+  padding: 10px 12px;
+  background: #2a1010;
+  border: 1px solid #7f1d1d;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #fca5a5;
+  line-height: 1.5;
+}
+
+.tr-platforms {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tr-platform-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.tr-platform-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #e8d8ff;
+}
+.tr-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.tr-dot-claude  { background: #f87171; }
+.tr-dot-chatgpt { background: #60a5fa; }
+.tr-pings { font-size: 11px; color: #9d8ec0; }
+
+.tr-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9d8ec0;
+  margin: 8px 0 4px;
+}
+
+.tr-tracker-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid #2a2040;
+}
+.tr-tracker-card:last-child { border-bottom: none; }
+.tr-tracker-name { font-size: 12px; font-weight: 700; color: #e8d8ff; }
+.tr-tracker-desc { font-size: 11px; color: #9d8ec0; margin-top: 2px; }
+.tr-tracker-meta { text-align: right; flex-shrink: 0; }
+
+.tr-timing-before {
+  display: inline-block;
+  background: #3b0808;
+  border: 1px solid #7f1d1d;
+  color: #f87171;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 3px;
+}
+.tr-timing-after {
+  display: inline-block;
+  background: #052e16;
+  border: 1px solid #14532d;
+  color: #4ade80;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 3px;
+}
+.tr-call-count { font-size: 11px; color: #9d8ec0; }
+.tr-empty { font-size: 12px; color: #9d8ec0; font-style: italic; padding: 4px 0; }
+
+.tr-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-top: 1px solid #2a2040;
+  margin-top: 4px;
+}
+.tr-session-time { font-size: 11px; color: #9d8ec0; }
