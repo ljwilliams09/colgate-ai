@@ -1,5 +1,19 @@
 # AI Use Extension
 
+## Network Traffic Analysis
+
+- Insights:
+
+1. How does network traffic signify the start and end of a prompt
+2. What is the proportion of information that a person receieves from AI?
+   - P(AI) = proportion of information from AI / proportion of informaiton from AI + proportion of information from non-AI
+3. Who is notified when the user prompts/interacts with AI tools? What kinds of data do LLMs collect on the usage of their sites?
+   - ChatGPT pings `www.google-analytics.com` before the user prompt (init phase), and every single time the user interacts with the LLM
+   - Claude pings `connect.facebook.net` before the user prompt, and every single time the user interacts with the LLM
+   - Both `google analytics` and `facebook pixel` are specifically designed to track user behavior
+   - This raises the question of whether behavioral data collected by these third parties could inform how AI platforms optimize for user engagement, however, this question cannot be answered from network traffic alone since the data is encrypted.
+3.
+
 ## Chrome Extension
 
 The `extension/` folder contains a Manifest V3 Chrome extension that captures browser network requests and shows them in a popup.
