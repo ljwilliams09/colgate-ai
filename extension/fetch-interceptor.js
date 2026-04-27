@@ -63,8 +63,12 @@
       const parsed = JSON.parse(bodyText);
 
       if (platform === "claude") {
-        if (typeof parsed.prompt === "string")
-          return parsed.prompt.slice(0, 200);
+        if (typeof parsed.prompt === "string") {
+          return {
+            preview: parsed.prompt.slice(0, 200),
+            length: parsed.prompt.length,
+          };
+        }
       }
 
       const messages = parsed.messages;
@@ -75,13 +79,16 @@
           if (role !== "user") continue;
           const content = msg.content;
           if (content?.parts && Array.isArray(content.parts)) {
-            return content.parts.filter(Boolean).join(" ").slice(0, 200);
+            const full = content.parts.filter(Boolean).join(" ");
+            return { preview: full.slice(0, 200), length: full.length };
           }
-          if (typeof content === "string") return content.slice(0, 200);
+          if (typeof content === "string") {
+            return { preview: content.slice(0, 200), length: content.length };
+          }
         }
       }
     } catch (_) {}
-    return "";
+    return { preview: "", length: 0 };
   }
 
   function isLikelyChatGptUserSend(bodyText) {
@@ -117,6 +124,7 @@
 
     let lineBuffer = "";
     let response_bytes = 0;
+    let response_chars = 0;
     let sse_event_count = 0;
     let tool_invoked = false;
     let tool_name = null;
@@ -152,7 +160,23 @@
           if (!obj || typeof obj !== "object") continue;
 
           const type = obj.type || "";
+          // response character counting
 
+          // claude text delta
+          if (
+            type == "content_block_delta" &&
+            typeof obj.delta?.text == "string"
+          ) {
+            response_chars += obj.delta.text.length;
+          }
+
+          // chatgpt text delta
+          if (
+            obj.choices?.[0]?.delta?.content &&
+            typeof obj.choices[0].delta.content === "string"
+          ) {
+            response_chars += obj.choices[0].delta.content.length;
+          }
           if (type === "server_ste_metadata") {
             const m = obj.metadata || {};
             tool_invoked = Boolean(m.tool_invoked);
@@ -212,7 +236,9 @@
           capturedAt: meta.capturedAt,
           ttfb_ms: meta.ttfb_ms,
           prompt_preview: meta.prompt_preview,
+          prompt_length: meta.prompt_length, // added prompt length to track total information being recieved
           response_bytes,
+          response_chars,
           sse_event_count,
           tool_invoked,
           tool_name,
@@ -256,7 +282,8 @@
     }
 
     const platform = isChatGPT ? "chatgpt" : "claude";
-    const prompt_preview = extractPromptPreview(bodyText, platform);
+    const { preview: prompt_preview, length: prompt_length } =
+      extractPromptPreview(bodyText, platform);
 
     const callTime = Date.now();
     const response = await ORIGINAL_FETCH(input, init);

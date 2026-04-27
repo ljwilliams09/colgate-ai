@@ -1,51 +1,131 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>AI Session Capture</title>
-  <link rel="stylesheet" href="sidepanel.css" />
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI Session Capture</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <div class="header">
+      <div>
+        <div class="header-title">AI Session Capture</div>
+        <div class="header-sub">
+          Swipe: dashboard • livestream • specifics • timewise
+        </div>
+      </div>
+      <button class="btn-clear" id="clearBtn">Clear all</button>
+    </div>
 
-  <div class="header">
-    <div>
-      <div class="header-title">AI Session Capture</div>
-      <div class="header-sub">chatgpt + claude</div>
+    <div class="swipe-nav" id="swipeNav">
+      <button class="nav-pill is-active" data-index="0">Dashboard</button>
+      <button class="nav-pill" data-index="1">Livestream</button>
+      <button class="nav-pill" data-index="2">Specifics</button>
+      <button class="nav-pill" data-index="3">Timewise</button>
     </div>
-    <button class="btn-clear" id="clearBtn">Clear all</button>
-  </div>
 
-  <!-- Summary stats -->
-  <div class="stats-row">
-    <div class="stat">
-      <div class="stat-value" id="totalSends">0</div>
-      <div class="stat-label">Sends</div>
-    </div>
-    <div class="stat" title="% of sends where the AI used a tool (e.g. web search, file analysis)">
-      <div class="stat-value" id="toolRate">—</div>
-      <div class="stat-label">Used a tool</div>
-    </div>
-    <div class="stat" title="Avg time from sending your message until the first word appears">
-      <div class="stat-value" id="avgTtfb">—</div>
-      <div class="stat-label">Avg response time</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value" id="avgThirdParties">—</div>
-      <div class="stat-label">Avg 3rd parties</div>
-    </div>
-  </div>
+    <div class="panel-viewport" id="panelViewport">
+      <section class="panel" data-panel="dashboard">
+        <div class="panel-inner">
+          <div class="section-title">Main Dashboard</div>
 
-  <!-- Per-tool breakdown -->
-  <div id="toolBreakdown"></div>
+          <div class="stats-grid">
+            <div class="stat-box">
+              <div class="stat-value" id="totalSends">0</div>
+              <div class="stat-label">Sends</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="promptsToday">0</div>
+              <div class="stat-label">Prompts Today</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="toolRate">—</div>
+              <div class="stat-label">Used Tool</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="avgTtfb">—</div>
+              <div class="stat-label">Avg TTFB</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="avgThirdParties">—</div>
+              <div class="stat-label">Avg 3P</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="responsePages">—</div>
+              <div class="stat-label">Response Pages</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="avgPromptLength">—</div>
+              <div class="stat-label">Avg Prompt</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="promptRange">—</div>
+              <div class="stat-label">Prompt Range</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="avgResponseBytes">—</div>
+              <div class="stat-label">Avg Resp</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="sseEvents">—</div>
+              <div class="stat-label">SSE Events</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-  <!-- Send cards -->
-  <div class="cards" id="cards">
-    <div class="empty" id="emptyState">
-      No sends captured yet.<br>
-      Chat with ChatGPT or Claude and it will show up here.
+      <section class="panel" data-panel="livestream">
+        <div class="panel-inner">
+          <div class="section-title">Livestream</div>
+          <div class="timeline-note">Recent captures as they arrive</div>
+          <div class="cards" id="livestreamCards"></div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="specifics">
+        <div class="panel-inner">
+          <div class="section-title">Specific Information</div>
+          <div class="split-grid">
+            <div class="detail-box">
+              <div class="detail-title">Models</div>
+              <div class="mini-list" id="modelsList"></div>
+            </div>
+            <div class="detail-box">
+              <div class="detail-title">Tools</div>
+              <div class="mini-list" id="toolsList"></div>
+            </div>
+            <div class="detail-box">
+              <div class="detail-title">Platforms</div>
+              <div class="mini-list" id="platformList"></div>
+            </div>
+            <div class="detail-box">
+              <div class="detail-title">Top Domains</div>
+              <div class="mini-list" id="domainList"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="timewise">
+        <div class="panel-inner">
+          <div class="section-title">Timewise Information</div>
+          <div class="timeline-note">Daily rollups from persistent storage</div>
+          <div class="timeline" id="timeline"></div>
+        </div>
+      </section>
     </div>
-  </div>
 
-  <script src="sidepanel.js"></script>
-</body>
+    <div class="dots" id="dots">
+      <button
+        class="dot is-active"
+        data-index="0"
+        aria-label="Go to dashboard"
+      ></button>
+      <button class="dot" data-index="1" aria-label="Go to livestream"></button>
+      <button class="dot" data-index="2" aria-label="Go to specifics"></button>
+      <button class="dot" data-index="3" aria-label="Go to timewise"></button>
+    </div>
+
+    <script src="aggregation-api.js"></script>
+    <script src="sidepanel.js"></script>
+  </body>
 </html>

@@ -5,6 +5,9 @@
 // Also tracks third-party domains per send using the Disconnect.me tracker list.
 //Used AI to help code this!
 
+// Load aggregation storage module
+importScripts("storage-aggregator.js");
+
 // ── Disconnect.me tracker database ────────────────────────────────────────
 
 const DISCONNECT_URL =
@@ -127,15 +130,17 @@ chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch(() => {});
 
-const STORAGE_KEY = "aiCaptureSends";
+const SENDS_STORAGE_KEY = "aiCaptureSends";
 const MAX_SENDS = 100;
 
 let sends = [];
 let sendIdx = 0;
 
 const ready = Promise.all([
-  chrome.storage.local.get(STORAGE_KEY).then((result) => {
-    sends = Array.isArray(result[STORAGE_KEY]) ? result[STORAGE_KEY] : [];
+  chrome.storage.local.get(SENDS_STORAGE_KEY).then((result) => {
+    sends = Array.isArray(result[SENDS_STORAGE_KEY])
+      ? result[SENDS_STORAGE_KEY]
+      : [];
     sendIdx = sends.length;
     updateBadge();
   }),
@@ -150,7 +155,7 @@ function updateBadge() {
 }
 
 async function persist() {
-  await chrome.storage.local.set({ [STORAGE_KEY]: sends });
+  await chrome.storage.local.set({ [SENDS_STORAGE_KEY]: sends });
   updateBadge();
   chrome.runtime.sendMessage({ type: "sends-updated" }).catch(() => {});
 }
@@ -161,7 +166,7 @@ function ensureReady() {
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "ai-capture") {
-    ensureReady().then(() => {
+    ensureReady().then(async () => {
       sendIdx++;
       const record = {
         send_id: `send${sendIdx}`,
@@ -171,6 +176,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sends.unshift(record);
       if (sends.length > MAX_SENDS) sends = sends.slice(0, MAX_SENDS);
       persist().catch(() => {});
+
+      // Aggregate capture data for persistent statistics
+      addCapture(message.payload).catch((e) => {
+        console.error("Error adding to aggregation:", e);
+      });
+
       sendResponse({ ok: true });
     });
     return true;
@@ -187,10 +198,46 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     ensureReady().then(async () => {
       sends = [];
       sendIdx = 0;
-      await chrome.storage.local.remove(STORAGE_KEY);
+      await chrome.storage.local.remove(SENDS_STORAGE_KEY);
       updateBadge();
       sendResponse({ ok: true });
     });
+    return true;
+  }
+
+  // Aggregation queries
+  if (message.type === "get-today-aggregation") {
+    getTodayAggregation()
+      .then((agg) => sendResponse({ aggregation: agg }))
+      .catch((e) => sendResponse({ error: e.message }));
+    return true;
+  }
+
+  if (message.type === "get-all-aggregations") {
+    getAllAggregations()
+      .then((aggs) => sendResponse({ aggregations: aggs }))
+      .catch((e) => sendResponse({ error: e.message }));
+    return true;
+  }
+
+  if (message.type === "get-aggregation") {
+    getAggregation(message.date)
+      .then((agg) => sendResponse({ aggregation: agg }))
+      .catch((e) => sendResponse({ error: e.message }));
+    return true;
+  }
+
+  if (message.type === "export-aggregations") {
+    exportAsJson()
+      .then((json) => sendResponse({ json }))
+      .catch((e) => sendResponse({ error: e.message }));
+    return true;
+  }
+
+  if (message.type === "clear-aggregations") {
+    clearAllAggregations()
+      .then(() => sendResponse({ ok: true }))
+      .catch((e) => sendResponse({ error: e.message }));
     return true;
   }
 });
