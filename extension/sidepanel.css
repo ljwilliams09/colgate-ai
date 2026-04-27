@@ -1,0 +1,213 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Courier New', monospace;
+  background: #0d0d12;
+  color: #f5f2ff;
+  min-width: 300px;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #2a2040;
+  background: #110f1a;
+}
+.header-title { font-size: 15px; font-weight: bold; color: #e8d8ff; letter-spacing: 0.03em; }
+.header-sub   { font-size: 11px; color: #cec6f0; margin-top: 2px; font-weight: 600; }
+
+/* ── Stats row ── */
+.stats-row {
+  display: flex;
+  border-bottom: 1px solid #2a2040;
+  background: #110f1a;
+}
+.stat {
+  flex: 1;
+  padding: 10px 14px;
+  border-right: 1px solid #2a2040;
+}
+.stat:last-child { border-right: none; }
+.stat-value { font-size: 20px; color: #c4a8ff; font-weight: bold; }
+.stat-label { font-size: 10px; color: #cec6f0; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; font-weight: 700; }
+
+/* ── Per-tool breakdown ── */
+.tool-breakdown {
+  padding: 10px 16px;
+  border-bottom: 1px solid #2a2040;
+  background: #110f1a;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tb-header {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #cec6f0;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.tb-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+.tb-pill {
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid;
+  font-weight: bold;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.tb-sub    { color: #9d8ec0; flex: 1; font-size: 10px; }
+.tb-count  { color: #e8d8ff; font-weight: 600; flex-shrink: 0; }
+.tb-metric { color: #c4a8ff; font-weight: 600; flex-shrink: 0; min-width: 60px; text-align: right; }
+
+/* ── Send cards ── */
+.cards {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.send-card {
+  background: #13111e;
+  border: 1px solid #2a2040;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.send-card:hover {
+  border-color: #6d28d9;
+}
+
+/* Top row: prompt + response size */
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+.card-prompt {
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 600;
+  color: #f5f2ff;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-response {
+  text-align: right;
+  flex-shrink: 0;
+}
+.card-response-size { font-size: 13px; font-weight: bold; color: #ffffff; }
+.card-ttfb          { font-size: 11px; color: #cec6f0; font-weight: 600; }
+
+/* Bottom row: pills for turn mode, tool, model */
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.pill {
+  display: inline-flex;
+  flex-direction: column;
+  padding: 4px 9px;
+  border-radius: 8px;
+  font-size: 11px;
+  border: 1px solid;
+  line-height: 1.3;
+}
+.pill-label { font-weight: bold; }
+.pill-sub   { font-size: 10px; opacity: 0.9; }
+
+.pill-model {
+  background: #0f1e2e;
+  border-color: #1e4d6b;
+  color: #a5e3ff;
+}
+.pill-no-tool {
+  background: #1a1825;
+  border-color: #2a2040;
+  color: #e0d8ff;
+  font-weight: 600;
+}
+
+/* Third-party contacts section */
+.card-third-parties {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #2a2040;
+}
+.tp-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #cec6f0;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+.tp-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.tp-chip {
+  display: inline-flex;
+  flex-direction: column;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: #1a1825;
+  border: 1px solid #2a2040;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.tp-domain { font-weight: bold; color: #e8d8ff; }
+.tp-cat    { color: #cec6f0; font-size: 9px; font-weight: 600; }
+.tp-none   { font-size: 11px; color: #b8b0e0; font-style: italic; }
+
+/* Send label at the bottom */
+.card-footer {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #b8b0e0;
+}
+
+/* ── Empty state ── */
+.empty {
+  color: #b8b0e0;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 40px 16px;
+  line-height: 1.7;
+}
+
+/* ── Clear button ── */
+.btn-clear {
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid #2a2040;
+  background: #1a1825;
+  color: #c4a8ff;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-clear:hover { background: #2a2040; }

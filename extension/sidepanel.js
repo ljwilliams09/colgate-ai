@@ -16,16 +16,15 @@ function esc(str) {
     .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// Same palette + hash as dashboard.html so colors stay consistent
 const PALETTE = [
-  { bg: "#eef2ff", border: "#c0caff", color: "#3a4abd" },
-  { bg: "#fff7e6", border: "#f5c876", color: "#7a4f00" },
-  { bg: "#fff0f6", border: "#f5a0c8", color: "#7a0040" },
-  { bg: "#edfaf3", border: "#7dd9a8", color: "#0a5c39" },
-  { bg: "#f3edff", border: "#c8a8f5", color: "#4a0a7a" },
-  { bg: "#fff4ed", border: "#f5b87a", color: "#7a3300" },
-  { bg: "#edf8ff", border: "#7acef5", color: "#003a5c" },
-  { bg: "#fdfaed", border: "#d4c876", color: "#5c4f00" },
+  { bg: "#1a1333", border: "#6d28d9", color: "#c4b5fd" },
+  { bg: "#0f1e2e", border: "#1e4d6b", color: "#7dd3fc" },
+  { bg: "#1a1130", border: "#5b21b6", color: "#a78bfa" },
+  { bg: "#0e1f1a", border: "#065f46", color: "#6ee7b7" },
+  { bg: "#1e1030", border: "#7c3aed", color: "#ddd6fe" },
+  { bg: "#1a1020", border: "#9d174d", color: "#f9a8d4" },
+  { bg: "#0f1e2e", border: "#0369a1", color: "#38bdf8" },
+  { bg: "#1a1333", border: "#4c1d95", color: "#e9d5ff" },
 ];
 const colorCache = {};
 function hashStr(str) {
@@ -38,16 +37,14 @@ function getStyle(uc) {
   return colorCache[uc];
 }
 
-const TOOL_SUBTITLE = {
-  text:     "memory only",
-  search:   "web search",
-  shopping: "shopping mode",
-};
+function toolSubtitle(uc) {
+  return uc.replace(/_/g, " ");
+}
 
 function buildCard(d) {
   const uc       = (d.turn_use_case || "unknown").toLowerCase();
   const s        = getStyle(uc);
-  const toolSub  = TOOL_SUBTITLE[uc] || uc;
+  const toolSub  = toolSubtitle(uc);
   const platform = d.platform === "claude" ? "Claude" : "ChatGPT";
   const preview  = d.prompt_preview
     ? `"${esc(d.prompt_preview).slice(0, 60)}${d.prompt_preview.length > 60 ? "…" : ""}"`
@@ -78,17 +75,67 @@ function buildCard(d) {
        </span>`
     : "";
 
+  // Third-party contacts section
+  const contacts = Array.isArray(d.third_party_contacts) ? d.third_party_contacts : [];
+  const thirdPartyHtml = contacts.length
+    ? `<div class="card-third-parties">
+        <div class="tp-label">Third-party contacts (${contacts.length})</div>
+        <div class="tp-list">
+          ${contacts.map(c => `
+            <span class="tp-chip">
+              <span class="tp-domain">${esc(c.domain)}</span>
+              <span class="tp-cat">${esc(c.category)}</span>
+            </span>`).join("")}
+        </div>
+       </div>`
+    : `<div class="card-third-parties tp-none">No third-party contacts detected</div>`;
+
   return `
     <div class="send-card">
       <div class="card-top">
         <div class="card-prompt">${preview}</div>
         <div class="card-response">
           <div class="card-response-size">${fmtBytes(d.response_bytes)}</div>
-          <div class="card-ttfb">TTFB ${d.ttfb_ms != null ? Math.round(d.ttfb_ms) + " ms" : "—"}</div>
+          <div class="card-ttfb" title="Time To First Byte — how long from sending your message until the AI started responding">TTFB ${d.ttfb_ms != null ? Math.round(d.ttfb_ms) + " ms" : "—"}</div>
         </div>
       </div>
       <div class="card-meta">${modePill}${toolPill}${modelPill}</div>
+      ${thirdPartyHtml}
       <div class="card-footer">${esc(d.send_id)} · ${platform}</div>
+    </div>`;
+}
+
+function renderToolBreakdown(sends) {
+  const container = document.getElementById("toolBreakdown");
+  if (!sends.length) { container.innerHTML = ""; return; }
+
+  // Group sends by turn_use_case
+  const groups = {};
+  for (const s of sends) {
+    const key = (s.turn_use_case || "unknown").toLowerCase();
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(s);
+  }
+
+  const rows = Object.entries(groups).map(([uc, items]) => {
+    const style    = getStyle(uc);
+    const avgTtfb  = Math.round(items.map(s => s.ttfb_ms).filter(Boolean).reduce((a, b) => a + b, 0) / (items.filter(s => s.ttfb_ms != null).length || 1));
+    const avgBytes = Math.round(items.map(s => s.response_bytes || 0).reduce((a, b) => a + b, 0) / items.length);
+    const subtitle = toolSubtitle(uc);
+    return `
+      <div class="tb-row">
+        <span class="tb-pill" style="background:${style.bg};border-color:${style.border};color:${style.color}">${esc(uc)}</span>
+        <span class="tb-sub">${esc(subtitle)}</span>
+        <span class="tb-count">${items.length} send${items.length !== 1 ? "s" : ""}</span>
+        <span class="tb-metric" title="Average time to first byte for this tool">${avgTtfb} ms</span>
+        <span class="tb-metric">${fmtBytes(avgBytes)}</span>
+      </div>`;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="tool-breakdown">
+      <div class="tb-header">Breakdown by tool</div>
+      ${rows}
     </div>`;
 }
 
@@ -104,6 +151,14 @@ function render(sends) {
     ttfbVals.length
       ? Math.round(ttfbVals.reduce((a, b) => a + b, 0) / ttfbVals.length) + " ms"
       : "—";
+
+  const tpCounts = sends.map(s => (s.third_party_contacts || []).length);
+  document.getElementById("avgThirdParties").textContent =
+    tpCounts.length
+      ? (tpCounts.reduce((a, b) => a + b, 0) / tpCounts.length).toFixed(1)
+      : "—";
+
+  renderToolBreakdown(sends);
 
   const cards      = document.getElementById("cards");
   const emptyState = document.getElementById("emptyState");
