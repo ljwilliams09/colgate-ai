@@ -3,7 +3,7 @@
   "name": "AI Chat Session Capture",
   "version": "1.0.0",
   "description": "Live capture of ChatGPT sends — turn mode, tools, latency, and model.",
-  "permissions": ["storage", "sidePanel", "webRequest"],
+  "permissions": ["storage", "sidePanel", "webRequest", "tabs"],
   "host_permissions": [
     "https://chatgpt.com/*",
     "https://claude.ai/*",
