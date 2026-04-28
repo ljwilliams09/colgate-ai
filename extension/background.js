@@ -80,6 +80,95 @@ function categorizeDomain(domain) {
   return "other";
 }
 
+// ── Tracker detection ─────────────────────────────────────────────────────────
+
+const WATCHED_SITES = ["claude.ai", "chatgpt.com"];
+
+const TRACKERS = {
+  "connect.facebook.net": {
+    label: "Facebook (Meta)",
+    desc: "Ad behavior tracking",
+  },
+  "www.google-analytics.com": {
+    label: "Google Analytics",
+    desc: "Usage analytics",
+  },
+  "googletagmanager.com": {
+    label: "Google Tag Manager",
+    desc: "Script injection",
+  },
+  "browser-intake-us5-datadoghq.com": {
+    label: "Datadog",
+    desc: "Session monitoring",
+  },
+  "api-iam.intercom.io": { label: "Intercom", desc: "Live support connection" },
+};
+
+const PROMPT_PATTERNS = {
+  "claude.ai": /\/api\/.*\/completion|\/api\/.*\/messages/,
+  "chatgpt.com": /\/backend-api\/conversation/,
+};
+
+const sessions = {};
+
+chrome.webRequest.onBeforeRequest.addListener(
+  (details) => {
+    if (details.tabId < 0) return;
+
+    chrome.tabs.get(details.tabId, (tab) => {
+      if (chrome.runtime.lastError || !tab?.url) return;
+
+      const onAI = WATCHED_SITES.find((s) => tab.url.includes(s));
+      if (!onAI) return;
+
+      const now = Date.now();
+      if (!sessions[onAI]) {
+        sessions[onAI] = { start: now, firstPromptTime: null };
+        chrome.storage.local.set({ sessions });
+      }
+      const session = sessions[onAI];
+
+      const promptPattern = PROMPT_PATTERNS[onAI];
+      if (
+        !session.firstPromptTime &&
+        details.method === "POST" &&
+        promptPattern?.test(details.url)
+      ) {
+        session.firstPromptTime = now;
+        chrome.storage.local.set({ sessions });
+      }
+
+      const match = Object.entries(TRACKERS).find(([domain]) =>
+        details.url.includes(domain),
+      );
+      if (!match) return;
+
+      const [domain, info] = match;
+      const tOffset = Number(((now - session.start) / 1000).toFixed(1));
+      const beforePrompt =
+        !session.firstPromptTime || now < session.firstPromptTime;
+
+      chrome.storage.local.get(["trackerLog"], (result) => {
+        const log = result.trackerLog || [];
+        log.push({
+          ai: onAI,
+          tracker: info.label,
+          desc: info.desc,
+          domain,
+          time: now,
+          tOffset,
+          beforePrompt,
+        });
+        chrome.storage.local.set({ trackerLog: log });
+        chrome.runtime
+          .sendMessage({ type: "trackers-updated" })
+          .catch(() => {});
+      });
+    });
+  },
+  { urls: ["<all_urls>"] },
+);
+
 // ── Third-party request buffer ─────────────────────────────────────────────
 
 //right now it only does chatGPT and not claude!!
@@ -137,11 +226,12 @@ let sends = [];
 let sendIdx = 0;
 
 const ready = Promise.all([
-  chrome.storage.local.get(SENDS_STORAGE_KEY).then((result) => {
+  chrome.storage.local.get([SENDS_STORAGE_KEY, "sessions"]).then((result) => {
     sends = Array.isArray(result[SENDS_STORAGE_KEY])
       ? result[SENDS_STORAGE_KEY]
       : [];
     sendIdx = sends.length;
+    Object.assign(sessions, result.sessions || {});
     updateBadge();
   }),
   loadDisconnectList(),
@@ -238,6 +328,28 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     clearAllAggregations()
       .then(() => sendResponse({ ok: true }))
       .catch((e) => sendResponse({ error: e.message }));
+    return true;
+  }
+
+  if (message.type === "get-tracker-log") {
+    ensureReady().then(() => {
+      chrome.storage.local.get(["trackerLog", "sessions"], (result) => {
+        sendResponse({
+          log: result.trackerLog || [],
+          sessions: result.sessions || {},
+        });
+      });
+    });
+    return true;
+  }
+
+  if (message.type === "clear-tracker-log") {
+    ensureReady().then(async () => {
+      for (const site of WATCHED_SITES) delete sessions[site];
+      await chrome.storage.local.remove(["trackerLog", "sessions"]);
+      chrome.runtime.sendMessage({ type: "trackers-updated" }).catch(() => {});
+      sendResponse({ ok: true });
+    });
     return true;
   }
 });

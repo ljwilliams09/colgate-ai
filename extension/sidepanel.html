@@ -9,120 +9,199 @@
     <div class="header">
       <div>
         <div class="header-title">AI Session Capture</div>
-        <div class="header-sub">
-          Swipe: dashboard • livestream • specifics • timewise
-        </div>
+        <div class="header-sub">captures + tracker log</div>
       </div>
       <button class="btn-clear" id="clearBtn">Clear all</button>
     </div>
 
-    <div class="swipe-nav" id="swipeNav">
-      <button class="nav-pill is-active" data-index="0">Dashboard</button>
-      <button class="nav-pill" data-index="1">Livestream</button>
-      <button class="nav-pill" data-index="2">Specifics</button>
-      <button class="nav-pill" data-index="3">Timewise</button>
+    <div class="tab-nav" style="display: none">
+      <button class="tab-btn active" data-tab="tab-captures">Captures</button>
+      <button class="tab-btn" data-tab="tab-trackers">Trackers</button>
     </div>
 
-    <div class="panel-viewport" id="panelViewport">
-      <section class="panel" data-panel="dashboard">
-        <div class="panel-inner">
-          <div class="section-title">Main Dashboard</div>
+    <div id="tab-captures" class="tab-panel active">
+      <div class="swipe-nav" id="swipeNav">
+        <button class="nav-pill is-active" data-index="0">Dashboard</button>
+        <button class="nav-pill" data-index="1">Livestream</button>
+        <button class="nav-pill" data-index="2">Trackers</button>
+        <button class="nav-pill" data-index="3">Timewise</button>
+      </div>
 
-          <div class="stats-grid">
-            <div class="stat-box">
-              <div class="stat-value" id="totalSends">0</div>
-              <div class="stat-label">Sends</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-value" id="promptsToday">0</div>
-              <div class="stat-label">Prompts Today</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-value" id="toolRate">—</div>
-              <div class="stat-label">Used Tool</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-value" id="avgTtfb">—</div>
-              <div class="stat-label">Avg TTFB</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-value" id="avgThirdParties">—</div>
-              <div class="stat-label">Avg 3P</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-value" id="responsePages">—</div>
-              <div class="stat-label">Response Pages</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-value" id="avgPromptLength">—</div>
-              <div class="stat-label">Avg Prompt</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-value" id="promptRange">—</div>
-              <div class="stat-label">Prompt Range</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-value" id="avgResponseBytes">—</div>
-              <div class="stat-label">Avg Resp</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-value" id="sseEvents">—</div>
-              <div class="stat-label">SSE Events</div>
+      <div class="panel-viewport" id="panelViewport">
+        <section class="panel" data-panel="dashboard">
+          <div class="panel-inner">
+            <div class="section-title">Main Dashboard</div>
+
+            <div class="stats-grid">
+              <div class="stat-box">
+                <div class="stat-value" id="promptsToday">0</div>
+                <div class="stat-label">Prompts Today</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value" id="responsePages">—</div>
+                <div class="stat-label">Response Pages</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value" id="avgPromptLength">—</div>
+                <div class="stat-label">Avg Prompt</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value" id="promptRange">—</div>
+                <div class="stat-label">Prompt Range</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value" id="avgResponseBytes">—</div>
+                <div class="stat-label">Avg Resp</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value" id="sseEvents">—</div>
+                <div class="stat-label">SSE Events</div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="panel" data-panel="livestream">
-        <div class="panel-inner">
-          <div class="section-title">Livestream</div>
-          <div class="timeline-note">Recent captures as they arrive</div>
-          <div class="cards" id="livestreamCards"></div>
-        </div>
-      </section>
-
-      <section class="panel" data-panel="specifics">
-        <div class="panel-inner">
-          <div class="section-title">Specific Information</div>
-          <div class="split-grid">
-            <div class="detail-box">
-              <div class="detail-title">Models</div>
-              <div class="mini-list" id="modelsList"></div>
-            </div>
-            <div class="detail-box">
-              <div class="detail-title">Tools</div>
-              <div class="mini-list" id="toolsList"></div>
-            </div>
-            <div class="detail-box">
-              <div class="detail-title">Platforms</div>
-              <div class="mini-list" id="platformList"></div>
-            </div>
-            <div class="detail-box">
-              <div class="detail-title">Top Domains</div>
-              <div class="mini-list" id="domainList"></div>
-            </div>
+        <section class="panel" data-panel="livestream">
+          <div class="panel-inner">
+            <div class="section-title">Livestream</div>
+            <div class="timeline-note">Recent captures as they arrive</div>
+            <div class="cards" id="livestreamCards"></div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="panel" data-panel="timewise">
-        <div class="panel-inner">
-          <div class="section-title">Timewise Information</div>
-          <div class="timeline-note">Daily rollups from persistent storage</div>
-          <div class="timeline" id="timeline"></div>
-        </div>
-      </section>
+        <section class="panel" data-panel="trackers">
+          <div class="panel-inner">
+            <div class="stats-row">
+              <div class="stat">
+                <div class="stat-value tr-alert-value" id="tr-before-count">
+                  —
+                </div>
+                <div class="stat-label">Before you typed</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value" id="tr-total-pings">—</div>
+                <div class="stat-label">Total pings</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value" id="tr-companies">—</div>
+                <div class="stat-label">Companies</div>
+              </div>
+            </div>
+            <div
+              class="tr-alert-banner"
+              id="tr-alert"
+              style="display: none"
+            ></div>
+            <div class="tr-platforms" id="tr-platforms"></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="timewise">
+          <div class="panel-inner">
+            <div class="section-title">Timewise Information</div>
+            <div class="timeline-note">
+              Daily rollups from persistent storage
+            </div>
+            <div class="timeline" id="timeline"></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="dots" id="dots">
+        <button
+          class="dot is-active"
+          data-index="0"
+          aria-label="Go to dashboard"
+        ></button>
+        <button
+          class="dot"
+          data-index="1"
+          aria-label="Go to livestream"
+        ></button>
+        <button class="dot" data-index="2" aria-label="Go to trackers"></button>
+        <button class="dot" data-index="3" aria-label="Go to timewise"></button>
+      </div>
     </div>
 
-    <div class="dots" id="dots">
-      <button
-        class="dot is-active"
-        data-index="0"
-        aria-label="Go to dashboard"
-      ></button>
-      <button class="dot" data-index="1" aria-label="Go to livestream"></button>
-      <button class="dot" data-index="2" aria-label="Go to specifics"></button>
-      <button class="dot" data-index="3" aria-label="Go to timewise"></button>
+    <div id="tab-trackers" class="tab-panel" style="display: none">
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-value tr-alert-value" id="tr-before-count">—</div>
+          <div class="stat-label">Before you typed</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="tr-total-pings">—</div>
+          <div class="stat-label">Total pings</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="tr-companies">—</div>
+          <div class="stat-label">Companies</div>
+        </div>
+      </div>
+
+      <div class="swipe-nav" id="trackerSwipeNav">
+        <button class="nav-pill is-active" data-index="0">Dashboard</button>
+        <button class="nav-pill" data-index="1">Tracker</button>
+        <button class="nav-pill" data-index="2">Livestream</button>
+        <button class="nav-pill" data-index="3">Timewise</button>
+      </div>
+
+      <div class="panel-viewport" id="trackerPanelViewport">
+        <section class="panel" data-panel="tr-dashboard">
+          <div class="panel-inner">
+            <div class="section-title">Tracker Dashboard</div>
+            <div
+              class="tr-alert-banner"
+              id="tr-alert"
+              style="display: none"
+            ></div>
+            <div class="tr-platforms" id="tr-platforms"></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="tr-tracker">
+          <div class="panel-inner">
+            <div class="section-title">Tracker Details</div>
+            <div class="tr-tracker-detail" id="tr-tracker-detail"></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="tr-livestream">
+          <div class="panel-inner">
+            <div class="section-title">Livestream</div>
+            <div class="timeline-note">Real-time tracker activity</div>
+            <div class="tr-livestream-cards" id="tr-livestream-cards"></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="tr-timewise">
+          <div class="panel-inner">
+            <div class="section-title">Timewise</div>
+            <div class="timeline-note">Tracker timeline</div>
+            <div class="tr-timeline-detail" id="tr-timeline-detail"></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="dots" id="trackerDots">
+        <button
+          class="dot is-active"
+          data-index="0"
+          aria-label="Go to dashboard"
+        ></button>
+        <button class="dot" data-index="1" aria-label="Go to tracker"></button>
+        <button
+          class="dot"
+          data-index="2"
+          aria-label="Go to livestream"
+        ></button>
+        <button class="dot" data-index="3" aria-label="Go to timewise"></button>
+      </div>
+
+      <div class="tr-footer">
+        <span class="tr-session-time" id="tr-session-time">No session yet</span>
+        <button class="btn-clear" id="tr-clearBtn">Clear log</button>
+      </div>
     </div>
 
     <script src="aggregation-api.js"></script>

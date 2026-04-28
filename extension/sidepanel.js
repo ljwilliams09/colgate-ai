@@ -29,6 +29,11 @@ function topEntries(obj, limit = 5) {
     .slice(0, limit);
 }
 
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = String(value);
+}
+
 function setMiniList(elId, entries, emptyText = "No data yet") {
   const el = document.getElementById(elId);
   if (!el) return;
@@ -151,33 +156,56 @@ function renderOverview(sends, todayAgg) {
   const avgResponseBytes = Number(responseStats.avg_bytes || 0);
   const sseEvents = Number(responseStats.total_sse_events || 0);
 
-  document.getElementById("totalSends").textContent = sends.length;
-  document.getElementById("promptsToday").textContent = String(promptsToday);
-  document.getElementById("toolRate").textContent = sends.length
-    ? `${Math.round((withTool.length / sends.length) * 100)}%`
-    : "-";
-  document.getElementById("avgTtfb").textContent = ttfbVals.length
-    ? `${Math.round(ttfbVals.reduce((a, b) => a + b, 0) / ttfbVals.length)} ms`
-    : "-";
-  document.getElementById("avgThirdParties").textContent = tpCounts.length
-    ? (tpCounts.reduce((a, b) => a + b, 0) / tpCounts.length).toFixed(1)
-    : "-";
-  document.getElementById("responsePages").textContent =
-    responsePages === "-" ? "-" : `~${responsePages}`;
-  document.getElementById("avgPromptLength").textContent = avgPromptLength
-    ? `${Math.round(avgPromptLength)} chars`
-    : "-";
-  document.getElementById("promptRange").textContent = promptRange;
-  document.getElementById("avgResponseBytes").textContent = avgResponseBytes
-    ? `${fmtBytes(Math.round(avgResponseBytes))}`
-    : "-";
-  document.getElementById("sseEvents").textContent = sseEvents
-    ? `${sseEvents}`
-    : "-";
+  setText("totalSends", sends.length);
+  setText("promptsToday", promptsToday);
+  setText(
+    "toolRate",
+    sends.length
+      ? `${Math.round((withTool.length / sends.length) * 100)}%`
+      : "-",
+  );
+  setText(
+    "avgTtfb",
+    ttfbVals.length
+      ? `${Math.round(ttfbVals.reduce((a, b) => a + b, 0) / ttfbVals.length)} ms`
+      : "-",
+  );
+  setText(
+    "avgThirdParties",
+    tpCounts.length
+      ? (tpCounts.reduce((a, b) => a + b, 0) / tpCounts.length).toFixed(1)
+      : "-",
+  );
+  setText("responsePages", responsePages === "-" ? "-" : `~${responsePages}`);
+  setText(
+    "avgPromptLength",
+    avgPromptLength ? `${Math.round(avgPromptLength)} chars` : "-",
+  );
+  setText("promptRange", promptRange);
+  setText(
+    "avgResponseBytes",
+    avgResponseBytes ? `${fmtBytes(Math.round(avgResponseBytes))}` : "-",
+  );
+  setText("sseEvents", sseEvents ? `${sseEvents}` : "-");
+
+  const toolBreakdown = document.getElementById("toolBreakdown");
+  if (toolBreakdown) {
+    const entries = topEntries(todayAgg?.tools_invoked || {}, 6);
+    toolBreakdown.innerHTML = entries.length
+      ? entries
+          .map(
+            ([label, value]) =>
+              `<div class="mini-row"><span class="mini-label">${esc(label)}</span><span class="mini-value">${esc(value)}</span></div>`,
+          )
+          .join("")
+      : `<div class="empty">No tool usage yet</div>`;
+  }
 }
 
 function renderLivestream(sends) {
-  const cards = document.getElementById("livestreamCards");
+  const cards =
+    document.getElementById("livestreamCards") ||
+    document.getElementById("cards");
   if (!cards) return;
 
   if (!sends.length) {
@@ -189,6 +217,7 @@ function renderLivestream(sends) {
 }
 
 function renderSpecifics(todayAgg, sends) {
+  if (!document.getElementById("modelsList")) return;
   const agg = todayAgg || {};
   setMiniList(
     "modelsList",
@@ -232,6 +261,7 @@ function formatDayLabel(dayKey) {
 
 function renderTimewise(allAggs) {
   const timeline = document.getElementById("timeline");
+  if (!timeline) return;
   const rows = Object.entries(allAggs || {}).sort(([a], [b]) =>
     a.localeCompare(b),
   );
@@ -273,8 +303,44 @@ function renderTimewise(allAggs) {
 
 function setupSwipe() {
   const viewport = document.getElementById("panelViewport");
-  const navButtons = [...document.querySelectorAll(".nav-pill")];
-  const dots = [...document.querySelectorAll(".dot")];
+  if (!viewport) return;
+  const navButtons = [...document.querySelectorAll("#swipeNav .nav-pill")];
+  const dots = [...document.querySelectorAll("#dots .dot")];
+
+  function setActive(index) {
+    navButtons.forEach((b, i) => b.classList.toggle("is-active", i === index));
+    dots.forEach((d, i) => d.classList.toggle("is-active", i === index));
+  }
+
+  function goTo(index) {
+    const left = viewport.clientWidth * index;
+    viewport.scrollTo({ left, behavior: "smooth" });
+    setActive(index);
+  }
+
+  navButtons.forEach((btn) => {
+    btn.addEventListener("click", () => goTo(Number(btn.dataset.index || 0)));
+  });
+
+  dots.forEach((dot) => {
+    dot.addEventListener("click", () => goTo(Number(dot.dataset.index || 0)));
+  });
+
+  viewport.addEventListener("scroll", () => {
+    const index = Math.round(
+      viewport.scrollLeft / Math.max(1, viewport.clientWidth),
+    );
+    setActive(index);
+  });
+}
+
+function setupTrackerSwipe() {
+  const viewport = document.getElementById("trackerPanelViewport");
+  if (!viewport) return;
+  const navButtons = [
+    ...document.querySelectorAll("#trackerSwipeNav .nav-pill"),
+  ];
+  const dots = [...document.querySelectorAll("#trackerDots .dot")];
 
   function setActive(index) {
     navButtons.forEach((b, i) => b.classList.toggle("is-active", i === index));
@@ -313,19 +379,162 @@ async function load() {
   const sends = Array.isArray(sendsResp?.sends) ? sendsResp.sends : [];
   renderOverview(sends, todayAgg);
   renderLivestream(sends);
-  renderSpecifics(todayAgg, sends);
+  await loadTrackers();
   renderTimewise(allAggs);
 }
 
 document.getElementById("clearBtn").addEventListener("click", async () => {
   await chrome.runtime.sendMessage({ type: "clear-sends" });
   await chrome.runtime.sendMessage({ type: "clear-aggregations" });
+  await chrome.runtime.sendMessage({ type: "clear-tracker-log" });
   await load();
 });
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === "sends-updated") load().catch(() => {});
+  if (message.type === "trackers-updated") loadTrackers().catch(() => {});
 });
 
 setupSwipe();
 load().catch(() => {});
+
+// ── Trackers tab ───────────────────────────────────────────────────────────────
+
+function timeSince(ms) {
+  const diff = Date.now() - ms;
+  if (diff < 60_000) return `${Math.round(diff / 1000)}s ago`;
+  if (diff < 3_600_000) {
+    const m = Math.round(diff / 60_000);
+    return `${m} min${m !== 1 ? "s" : ""} ago`;
+  }
+  const h = Math.round(diff / 3_600_000);
+  return `${h}h ago`;
+}
+
+function aggregateTrackerLog(log) {
+  const map = {};
+  for (const entry of log) {
+    if (!map[entry.ai]) map[entry.ai] = {};
+    if (!map[entry.ai][entry.tracker]) {
+      map[entry.ai][entry.tracker] = {
+        label: entry.tracker,
+        desc: entry.desc || "",
+        count: 0,
+        tOffset: entry.tOffset,
+        beforePrompt: entry.beforePrompt,
+      };
+    }
+    map[entry.ai][entry.tracker].count++;
+  }
+  return map;
+}
+
+const TRACKER_PLATFORMS = {
+  "claude.ai": { name: "Claude", dotClass: "tr-dot-claude" },
+  "chatgpt.com": { name: "ChatGPT", dotClass: "tr-dot-chatgpt" },
+};
+
+function renderTrackers(log, sessions) {
+  const aggregated = aggregateTrackerLog(log);
+  const allTrackers = Object.values(aggregated).flatMap((p) =>
+    Object.values(p),
+  );
+  const beforeCount = allTrackers.filter((t) => t.beforePrompt).length;
+  const companiesCount = new Set(allTrackers.map((t) => t.label)).size;
+
+  document.getElementById("tr-before-count").textContent = String(beforeCount);
+  document.getElementById("tr-total-pings").textContent = String(log.length);
+  document.getElementById("tr-companies").textContent = String(companiesCount);
+
+  const alertEl = document.getElementById("tr-alert");
+  if (beforeCount > 0) {
+    alertEl.textContent = `${beforeCount} tracker${beforeCount !== 1 ? "s" : ""} fired before your first prompt — companies were notified just by opening these tabs.`;
+    alertEl.style.display = "";
+  } else {
+    alertEl.style.display = "none";
+  }
+
+  const platformsEl = document.getElementById("tr-platforms");
+  platformsEl.innerHTML = "";
+
+  for (const [site, config] of Object.entries(TRACKER_PLATFORMS)) {
+    const trackers = aggregated[site] ? Object.values(aggregated[site]) : [];
+    const pingCount = log.filter((e) => e.ai === site).length;
+    const before = trackers.filter((t) => t.beforePrompt);
+    const after = trackers.filter((t) => !t.beforePrompt);
+
+    let html = `
+      <div class="tr-platform">
+        <div class="tr-platform-header">
+          <div class="tr-platform-name">
+            <span class="tr-dot ${esc(config.dotClass)}"></span>${esc(config.name)}
+          </div>
+          <span class="tr-pings">${pingCount} pings this session</span>
+        </div>`;
+
+    if (!trackers.length) {
+      html += `<div class="tr-empty">None detected yet</div>`;
+    } else {
+      if (before.length) {
+        html += `<div class="tr-group-label">Before you typed</div>`;
+        html += before
+          .map(
+            (t) => `
+          <div class="tr-tracker-card">
+            <div>
+              <div class="tr-tracker-name">${esc(t.label)}</div>
+              <div class="tr-tracker-desc">${esc(t.desc)}</div>
+            </div>
+            <div class="tr-tracker-meta">
+              <div class="tr-timing-before">t + ${t.tOffset}s</div>
+              <div class="tr-call-count">${t.count} call${t.count !== 1 ? "s" : ""}</div>
+            </div>
+          </div>`,
+          )
+          .join("");
+      }
+      if (after.length) {
+        html += `<div class="tr-group-label">After you typed</div>`;
+        html += after
+          .map(
+            (t) => `
+          <div class="tr-tracker-card">
+            <div>
+              <div class="tr-tracker-name">${esc(t.label)}</div>
+              <div class="tr-tracker-desc">${esc(t.desc)}</div>
+            </div>
+            <div class="tr-tracker-meta">
+              <div class="tr-timing-after">t + ${t.tOffset}s</div>
+              <div class="tr-call-count">${t.count} call${t.count !== 1 ? "s" : ""}</div>
+            </div>
+          </div>`,
+          )
+          .join("");
+      }
+    }
+
+    html += `</div>`;
+    platformsEl.insertAdjacentHTML("beforeend", html);
+  }
+
+  const starts = Object.values(sessions)
+    .map((s) => s.start)
+    .filter(Boolean);
+  document.getElementById("tr-session-time").textContent = starts.length
+    ? `Session started ${timeSince(Math.min(...starts))}`
+    : "No session yet";
+}
+
+async function loadTrackers() {
+  const response = await chrome.runtime.sendMessage({
+    type: "get-tracker-log",
+  });
+  renderTrackers(response?.log || [], response?.sessions || {});
+}
+
+document.getElementById("tr-clearBtn").addEventListener("click", async () => {
+  await chrome.runtime.sendMessage({ type: "clear-tracker-log" });
+  renderTrackers([], {});
+});
+
+loadTrackers().catch(() => {});
