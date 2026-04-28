@@ -50,6 +50,83 @@ function setMiniList(elId, entries, emptyText = "No data yet") {
     .join("");
 }
 
+const tooltip = document.createElement("div");
+tooltip.className = "custom-tooltip";
+tooltip.setAttribute("role", "tooltip");
+tooltip.hidden = true;
+document.body.appendChild(tooltip);
+
+let tooltipTarget = null;
+
+function placeTooltip(target) {
+  const rect = target.getBoundingClientRect();
+  const padding = 12;
+  const gap = 10;
+  const maxWidth = 240;
+  const text = target.dataset.tooltip || "";
+
+  tooltip.textContent = text;
+  tooltip.style.maxWidth = `${maxWidth}px`;
+
+  const tooltipRect = tooltip.getBoundingClientRect();
+  let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+  let top = rect.top - tooltipRect.height - gap;
+
+  if (left < padding) left = padding;
+  if (left + tooltipRect.width > window.innerWidth - padding) {
+    left = window.innerWidth - padding - tooltipRect.width;
+  }
+  if (top < padding) {
+    top = rect.bottom + gap;
+  }
+  if (top + tooltipRect.height > window.innerHeight - padding) {
+    top = Math.max(padding, window.innerHeight - padding - tooltipRect.height);
+  }
+
+  tooltip.style.left = `${Math.max(padding, left)}px`;
+  tooltip.style.top = `${Math.max(padding, top)}px`;
+}
+
+function showTooltip(target) {
+  const text = target?.dataset?.tooltip;
+  if (!text) return;
+  tooltipTarget = target;
+  tooltip.hidden = false;
+  tooltip.textContent = text;
+  placeTooltip(target);
+  requestAnimationFrame(() => tooltip.classList.add("is-visible"));
+}
+
+function hideTooltip() {
+  tooltip.classList.remove("is-visible");
+  tooltip.hidden = true;
+  tooltipTarget = null;
+}
+
+function bindTooltips() {
+  const targets = document.querySelectorAll("[data-tooltip]");
+  targets.forEach((target) => {
+    target.addEventListener("mouseenter", () => showTooltip(target));
+    target.addEventListener("mousemove", () => {
+      if (tooltipTarget === target && !tooltip.hidden) placeTooltip(target);
+    });
+    target.addEventListener("mouseleave", hideTooltip);
+    target.addEventListener("focusin", () => showTooltip(target));
+    target.addEventListener("focusout", hideTooltip);
+  });
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (tooltipTarget && !tooltip.hidden) placeTooltip(tooltipTarget);
+    },
+    true,
+  );
+  window.addEventListener("resize", () => {
+    if (tooltipTarget && !tooltip.hidden) placeTooltip(tooltipTarget);
+  });
+}
+
 const PALETTE = [
   { bg: "#18304a", border: "#2f6b93", color: "#9fe2ff" },
   { bg: "#1f2f22", border: "#3d8450", color: "#b5ffc8" },
@@ -395,6 +472,7 @@ chrome.runtime.onMessage.addListener((message) => {
   if (message.type === "trackers-updated") loadTrackers().catch(() => {});
 });
 
+bindTooltips();
 setupSwipe();
 load().catch(() => {});
 

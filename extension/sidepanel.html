@@ -30,30 +30,45 @@
       <div class="panel-viewport" id="panelViewport">
         <section class="panel" data-panel="dashboard">
           <div class="panel-inner">
-            <div class="section-title">Main Dashboard</div>
+            <div class="section-title">Today's AI Use</div>
 
             <div class="stats-grid">
-              <div class="stat-box">
+              <div class="stat-box" data-tooltip="Total prompts captured today">
                 <div class="stat-value" id="promptsToday">0</div>
                 <div class="stat-label">Prompts Today</div>
               </div>
-              <div class="stat-box">
+              <div
+                class="stat-box"
+                data-tooltip="How many pages of text you've recieved from AI"
+              >
                 <div class="stat-value" id="responsePages">—</div>
                 <div class="stat-label">Response Pages</div>
               </div>
-              <div class="stat-box">
+              <div
+                class="stat-box"
+                data-tooltip="Average length of prompts sent to the AI"
+              >
                 <div class="stat-value" id="avgPromptLength">—</div>
                 <div class="stat-label">Avg Prompt</div>
               </div>
-              <div class="stat-box">
+              <div
+                class="stat-box"
+                data-tooltip="Range of prompt lengths seen in this session"
+              >
                 <div class="stat-value" id="promptRange">—</div>
                 <div class="stat-label">Prompt Range</div>
               </div>
-              <div class="stat-box">
+              <div
+                class="stat-box"
+                data-tooltip="Average response payload size"
+              >
                 <div class="stat-value" id="avgResponseBytes">—</div>
                 <div class="stat-label">Avg Resp</div>
               </div>
-              <div class="stat-box">
+              <div
+                class="stat-box"
+                data-tooltip="Number of streaming events received"
+              >
                 <div class="stat-value" id="sseEvents">—</div>
                 <div class="stat-label">SSE Events</div>
               </div>
@@ -72,17 +87,26 @@
         <section class="panel" data-panel="trackers">
           <div class="panel-inner">
             <div class="stats-row">
-              <div class="stat">
+              <div
+                class="stat"
+                data-tooltip="Tracker requests that fired before your first typed prompt"
+              >
                 <div class="stat-value tr-alert-value" id="tr-before-count">
                   —
                 </div>
                 <div class="stat-label">Before you typed</div>
               </div>
-              <div class="stat">
+              <div
+                class="stat"
+                data-tooltip="Total tracker pings captured in this session"
+              >
                 <div class="stat-value" id="tr-total-pings">—</div>
                 <div class="stat-label">Total pings</div>
               </div>
-              <div class="stat">
+              <div
+                class="stat"
+                data-tooltip="Unique tracker companies detected"
+              >
                 <div class="stat-value" id="tr-companies">—</div>
                 <div class="stat-label">Companies</div>
               </div>

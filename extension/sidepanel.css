@@ -63,6 +63,31 @@ body {
   background: #2a3448;
 }
 
+.custom-tooltip {
+  position: fixed;
+  z-index: 9999;
+  max-width: 240px;
+  padding: 8px 10px;
+  border: 1px solid #36506a;
+  border-radius: 10px;
+  background: rgba(14, 17, 22, 0.96);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  color: #eaf3ff;
+  font-size: 11px;
+  line-height: 1.4;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.custom-tooltip.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .swipe-nav {
   display: flex;
   gap: 8px;
