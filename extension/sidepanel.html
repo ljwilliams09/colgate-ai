@@ -64,10 +64,10 @@
               </div>
             </div>
 
-            <div class="section-title section-title--spaced" data-tooltip="Which AI tools were invoked during your prompts today — e.g. web search, image generation, code interpreter">Tools Used Today</div>
+<div class="section-title section-title--spaced" data-tooltip="Which AI tools were invoked during your prompts today — e.g. web search, image generation, code interpreter">Tools Used Today</div>
             <div class="mini-list" id="toolBreakdown"></div>
 
-            <div class="section-title section-title--spaced">Top Trackers Today</div>
+            <div class="section-title section-title--spaced" data-tooltip="A mix of: websites the AI browsed during web searches, and internal AI service URLs (e.g. image generation, file storage)">Top URLs AI Accessed Today</div>
             <div class="mini-list" id="topTrackers"></div>
 
             <div class="section-title section-title--spaced">Platform Split</div>
@@ -110,11 +110,7 @@
                 <div class="stat-label">Companies</div>
               </div>
             </div>
-            <div
-              class="tr-alert-banner"
-              id="tr-alert"
-              style="display: none"
-            ></div>
+            <div class="tr-alert-banner is-hidden" id="tr-alert"></div>
             <div class="tr-platforms" id="tr-platforms"></div>
           </div>
         </section>
@@ -146,7 +142,7 @@
       </div>
     </div>
 
-    <div id="tab-trackers" class="tab-panel" style="display: none">
+    <div id="tab-trackers" class="tab-panel is-hidden">
       <div class="stats-row">
         <div class="stat">
           <div class="stat-value tr-alert-value" id="tr-before-count">—</div>
@@ -173,11 +169,7 @@
         <section class="panel" data-panel="tr-dashboard">
           <div class="panel-inner">
             <div class="section-title">Tracker Dashboard</div>
-            <div
-              class="tr-alert-banner"
-              id="tr-alert"
-              style="display: none"
-            ></div>
+            <div class="tr-alert-banner is-hidden" id="tr-alert"></div>
             <div class="tr-platforms" id="tr-platforms"></div>
           </div>
         </section>

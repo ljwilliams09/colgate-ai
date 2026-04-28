@@ -104,24 +104,23 @@ function hideTooltip() {
 }
 
 function bindTooltips() {
-  const targets = document.querySelectorAll("[data-tooltip]");
-  targets.forEach((target) => {
-    target.addEventListener("mouseenter", () => showTooltip(target));
-    target.addEventListener("mousemove", () => {
-      if (tooltipTarget === target && !tooltip.hidden) placeTooltip(target);
-    });
-    target.addEventListener("mouseleave", hideTooltip);
-    target.addEventListener("focusin", () => showTooltip(target));
-    target.addEventListener("focusout", hideTooltip);
+  // Event delegation — works on dynamically rendered elements like cards
+  document.addEventListener("mouseover", (e) => {
+    const target = e.target.closest("[data-tooltip]");
+    if (target) showTooltip(target);
   });
+  document.addEventListener("mouseout", (e) => {
+    if (!e.relatedTarget?.closest("[data-tooltip]")) hideTooltip();
+  });
+  document.addEventListener("focusin", (e) => {
+    const target = e.target.closest("[data-tooltip]");
+    if (target) showTooltip(target);
+  });
+  document.addEventListener("focusout", hideTooltip);
 
-  window.addEventListener(
-    "scroll",
-    () => {
-      if (tooltipTarget && !tooltip.hidden) placeTooltip(tooltipTarget);
-    },
-    true,
-  );
+  window.addEventListener("scroll", () => {
+    if (tooltipTarget && !tooltip.hidden) placeTooltip(tooltipTarget);
+  }, true);
   window.addEventListener("resize", () => {
     if (tooltipTarget && !tooltip.hidden) placeTooltip(tooltipTarget);
   });
@@ -192,7 +191,7 @@ function buildCard(d) {
         <div class="card-prompt">${preview}</div>
         <div class="card-response">
           <div class="card-response-size">${fmtBytes(d.response_bytes)}</div>
-          <div class="card-ttfb">TTFB ${d.ttfb_ms != null ? Math.round(d.ttfb_ms) + " ms" : "-"}</div>
+          <div class="card-ttfb" data-tooltip="Time To First Byte — how long from sending your message until the AI started responding">TTFB ${d.ttfb_ms != null ? Math.round(d.ttfb_ms) + " ms" : "-"}</div>
         </div>
       </div>
       <div class="card-meta">${modePill}${modelPill}</div>
@@ -202,35 +201,13 @@ function buildCard(d) {
 }
 
 function renderOverview(sends, todayAgg) {
-  const withTool = sends.filter((s) => s.tool_invoked);
   const ttfbVals = sends.map((s) => s.ttfb_ms).filter((v) => v != null);
-  const tpCounts = sends.map((s) => (s.third_party_contacts || []).length);
   const promptsToday = Number(todayAgg?.total_captures || 0) || sends.length;
-  const promptStats = todayAgg?.prompt_stats || {};
   const responseStats = todayAgg?.response_stats || {};
-  const totalResponseChars =
-    Number(responseStats.total_chars || 0) ||
-    sends.reduce((sum, s) => sum + (Number(s.response_chars) || 0), 0);
-  const responsePages =
-    totalResponseChars > 0
-      ? (totalResponseChars / 2500).toFixed(totalResponseChars < 2500 ? 2 : 1)
-      : "-";
-  const avgPromptLength = Number(promptStats.avg_length || 0);
-  const promptRange =
-    promptStats.max_length != null && promptStats.min_length != null
-      ? `${promptStats.min_length}–${promptStats.max_length}`
-      : "-";
   const avgResponseBytes = Number(responseStats.avg_bytes || 0);
   const sseEvents = Number(responseStats.total_sse_events || 0);
 
-  setText("totalSends", sends.length);
   setText("promptsToday", promptsToday);
-  setText(
-    "toolRate",
-    sends.length
-      ? `${Math.round((withTool.length / sends.length) * 100)}%`
-      : "-",
-  );
   const aggAvgTtfb = todayAgg?.latency_stats?.avg_ttfb_ms;
   setText(
     "avgTtfb",
@@ -240,22 +217,7 @@ function renderOverview(sends, todayAgg) {
         ? `${Math.round(ttfbVals.reduce((a, b) => a + b, 0) / ttfbVals.length)} ms`
         : "-",
   );
-  setText(
-    "avgThirdParties",
-    tpCounts.length
-      ? (tpCounts.reduce((a, b) => a + b, 0) / tpCounts.length).toFixed(1)
-      : "-",
-  );
-  setText("responsePages", responsePages === "-" ? "-" : `~${responsePages}`);
-  setText(
-    "avgPromptLength",
-    avgPromptLength ? `${Math.round(avgPromptLength)} chars` : "-",
-  );
-  setText("promptRange", promptRange);
-  setText(
-    "avgResponseBytes",
-    avgResponseBytes ? `${fmtBytes(Math.round(avgResponseBytes))}` : "-",
-  );
+  setText("avgResponseBytes", avgResponseBytes ? fmtBytes(Math.round(avgResponseBytes)) : "-");
   setText("sseEvents", sseEvents ? `${sseEvents}` : "-");
 
   const toolBreakdown = document.getElementById("toolBreakdown");
@@ -284,7 +246,7 @@ function renderOverview(sends, todayAgg) {
             <span class="tracker-count">${count}</span>
           </div>`
         ).join("")}</div>`
-      : `<div class="empty">No trackers detected today</div>`;
+      : `<div class="empty">No URLs accessed by AI today</div>`;
   }
 
   const platformSplit = document.getElementById("platformSplit");
@@ -322,40 +284,6 @@ function renderLivestream(sends) {
   cards.innerHTML = sends.slice(0, 5).map(buildCard).join("");
 }
 
-function renderSpecifics(todayAgg, sends) {
-  if (!document.getElementById("modelsList")) return;
-  const agg = todayAgg || {};
-  setMiniList(
-    "modelsList",
-    topEntries(agg.models, 8).map(([k, v]) => [k, `${v}`]),
-    "No model data yet",
-  );
-  setMiniList(
-    "toolsList",
-    topEntries(agg.tools_invoked, 8).map(([k, v]) => [k, `${v}`]),
-    "No tool usage yet",
-  );
-  setMiniList(
-    "platformList",
-    topEntries(agg.platforms, 4).map(([k, v]) => [k, `${v}`]),
-    "No platform data yet",
-  );
-
-  const domainMap = {};
-  for (const s of sends) {
-    const contacts = Array.isArray(s.third_party_contacts)
-      ? s.third_party_contacts
-      : [];
-    for (const c of contacts) {
-      domainMap[c.domain] = (domainMap[c.domain] || 0) + 1;
-    }
-  }
-  setMiniList(
-    "domainList",
-    topEntries(domainMap, 8).map(([k, v]) => [k, `${v}`]),
-    "No third-party domains seen",
-  );
-}
 
 function formatDayLabel(dayKey) {
   const d = new Date(`${dayKey}T00:00:00`);
@@ -445,40 +373,6 @@ function setupSwipe() {
   });
 }
 
-function setupTrackerSwipe() {
-  const viewport = document.getElementById("trackerPanelViewport");
-  if (!viewport) return;
-  const navButtons = [
-    ...document.querySelectorAll("#trackerSwipeNav .nav-pill"),
-  ];
-  const dots = [...document.querySelectorAll("#trackerDots .dot")];
-
-  function setActive(index) {
-    navButtons.forEach((b, i) => b.classList.toggle("is-active", i === index));
-    dots.forEach((d, i) => d.classList.toggle("is-active", i === index));
-  }
-
-  function goTo(index) {
-    const left = viewport.clientWidth * index;
-    viewport.scrollTo({ left, behavior: "smooth" });
-    setActive(index);
-  }
-
-  navButtons.forEach((btn) => {
-    btn.addEventListener("click", () => goTo(Number(btn.dataset.index || 0)));
-  });
-
-  dots.forEach((dot) => {
-    dot.addEventListener("click", () => goTo(Number(dot.dataset.index || 0)));
-  });
-
-  viewport.addEventListener("scroll", () => {
-    const index = Math.round(
-      viewport.scrollLeft / Math.max(1, viewport.clientWidth),
-    );
-    setActive(index);
-  });
-}
 
 async function load() {
   const [sendsResp, todayAgg, allAggs] = await Promise.all([

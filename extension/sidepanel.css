@@ -154,7 +154,8 @@ body {
   gap: 8px;
 }
 
-.stat-box--wide { grid-column: span 2; }
+.is-hidden { display: none; }
+
 
 .platform-bar {
   display: flex;
@@ -336,27 +337,6 @@ body {
   flex-shrink: 0;
 }
 
-.split-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-}
-
-.detail-box {
-  border: 1px solid #36445a;
-  border-radius: 12px;
-  background: #141b26;
-  padding: 10px;
-}
-
-.detail-title {
-  margin-bottom: 8px;
-  font-size: 10px;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: #c0cde3;
-  font-weight: 800;
-}
 
 .cards {
   display: flex;
@@ -438,11 +418,6 @@ body {
   color: #9ee5ff;
 }
 
-.pill-no-tool {
-  background: #1f2734;
-  border-color: #35455d;
-  color: #d5deef;
-}
 
 .card-third-parties {
   margin-top: 8px;
@@ -590,11 +565,6 @@ body {
   background: linear-gradient(90deg, #12afbf, #f6aa2f);
 }
 
-@media (min-width: 520px) {
-  .split-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
 /* Tab layout merged from the main branch. */
 .tab-nav {
   display: flex;

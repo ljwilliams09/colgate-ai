@@ -212,6 +212,7 @@ function collectThirdParties(capturedAt) {
   return out;
 }
 
+
 // ── Extension core ─────────────────────────────────────────────────────────
 
 // Open the side panel when the extension icon is clicked
@@ -343,7 +344,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
-  if (message.type === "clear-tracker-log") {
+if (message.type === "clear-tracker-log") {
     ensureReady().then(async () => {
       for (const site of WATCHED_SITES) delete sessions[site];
       await chrome.storage.local.remove(["trackerLog", "sessions"]);
