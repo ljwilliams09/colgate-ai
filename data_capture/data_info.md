@@ -73,3 +73,7 @@ Total Requests and Responses: 537
 - How many calls is it making to third parties and other analytics companies?
 - What types of tools does do these models use?
 - What is the network structure
+
+### Limitations
+
+- If an AI service uses a
