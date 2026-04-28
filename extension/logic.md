@@ -134,16 +134,28 @@ Adding on to storing send data, the background script also watches **network req
 
 **Files: `sidepanel.html`, `sidepanel.js`, `sidepanel.css`**
 
-When opening the extension's side panel, `sidepanel.js` asks the background worker for all stored sends via a `get-sends` message. It then renders a card for each send showing:
+The side panel has four tabs — **Dashboard**, **Livestream**, **Trackers**, and **Timewise**.
 
-- What you typed (prompt preview)
-- What mode the AI used (text, search, shopping, etc.)
-- What tool was called, if any
-- Which model responded
-- How long it took to get the first byte back (TTFB)
-- How many bytes came back and how many SSE events streamed
-- Any external URLs the AI fetched during the response
-- Which third-party domains were contacted during the send (with category labels)
+**Dashboard** (daily view) — pulls from `getTodayStats()` via `aggregation-api.js`:
+
+- Prompts today, avg response size, SSE events, avg response time (TTFB)
+- Tools used today (from `todayAgg.tools_invoked`)
+- Top trackers today with relative volume bar (from `todayAgg.server_fetched_domains`)
+- Platform split bar — ChatGPT vs Claude (from `todayAgg.platforms`)
+- "Clear" button clears aggregation stats only (`clear-aggregations`)
+
+**Livestream** (daily view) — pulls from `get-sends` via background.js:
+
+- Shows the 5 most recent captured sends as cards
+- Each card shows: prompt preview, turn mode + tool name merged into one pill, model, TTFB, response size, third-party contacts
+- Tool subtitles are dynamic — `turn_use_case` values like `image_gen` auto-format to `"image gen"` with no hardcoded lookup
+- "Clear" button clears captured sends only (`clear-sends`)
+
+**Trackers** — cumulative tracker log across all sessions
+
+**Timewise** — daily rollups from persistent storage
+
+The "Clear" button only appears on Dashboard and Livestream, and each clears only its own data.
 
 ---
 
@@ -210,7 +222,10 @@ A key part to presenting the network data of someones AI use is helping them tra
 5. `aggregation-api.js`
    - API for returning selected data from chrome.storage.local and parsing the object in which all the aggregations are stored in
 6. `sidepanel.js`
-   - queries aggregation_api.js to return the relevant data
+   - calls `getTodayStats()` from `aggregation-api.js` on load
+   - dashboard avg TTFB comes from `todayAgg.latency_stats.avg_ttfb_ms` (falls back to in-memory sends if aggregation unavailable)
+   - dashboard tool breakdown comes from `todayAgg.tools_invoked`
+   - both cover the full day, not just sends captured since the panel was opened
 
 Each day's aggregation includes:
 

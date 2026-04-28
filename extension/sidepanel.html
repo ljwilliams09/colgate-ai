@@ -11,7 +11,7 @@
         <div class="header-title">AI Session Capture</div>
         <div class="header-sub">captures + tracker log</div>
       </div>
-      <button class="btn-clear" id="clearBtn">Clear all</button>
+      <button class="btn-clear" id="clearBtn">Clear</button>
     </div>
 
     <div class="tab-nav" style="display: none">
@@ -30,40 +30,23 @@
       <div class="panel-viewport" id="panelViewport">
         <section class="panel" data-panel="dashboard">
           <div class="panel-inner">
-            <div class="section-title">Today's AI Use</div>
+            <div class="today-header">
+              <div class="section-title">Today's AI Use</div>
+              <div class="today-clock" id="todayClock"></div>
+            </div>
 
             <div class="stats-grid">
               <div class="stat-box" data-tooltip="Total prompts captured today">
                 <div class="stat-value" id="promptsToday">0</div>
                 <div class="stat-label">Prompts Today</div>
               </div>
+
               <div
                 class="stat-box"
-                data-tooltip="How many pages of text you've recieved from AI"
-              >
-                <div class="stat-value" id="responsePages">—</div>
-                <div class="stat-label">Response Pages</div>
-              </div>
-              <div
-                class="stat-box"
-                data-tooltip="Average length of prompts sent to the AI"
-              >
-                <div class="stat-value" id="avgPromptLength">—</div>
-                <div class="stat-label">Avg Prompt</div>
-              </div>
-              <div
-                class="stat-box"
-                data-tooltip="Range of prompt lengths seen in this session"
-              >
-                <div class="stat-value" id="promptRange">—</div>
-                <div class="stat-label">Prompt Range</div>
-              </div>
-              <div
-                class="stat-box"
-                data-tooltip="Average response payload size"
+                data-tooltip="Total average size of AI responses received today"
               >
                 <div class="stat-value" id="avgResponseBytes">—</div>
-                <div class="stat-label">Avg Resp</div>
+                <div class="stat-label">Avg Response Size</div>
               </div>
               <div
                 class="stat-box"
@@ -72,7 +55,23 @@
                 <div class="stat-value" id="sseEvents">—</div>
                 <div class="stat-label">SSE Events</div>
               </div>
+              <div
+                class="stat-box"
+                data-tooltip="Average time from sending your message until the AI started responding"
+              >
+                <div class="stat-value" id="avgTtfb">—</div>
+                <div class="stat-label">Avg Response Time</div>
+              </div>
             </div>
+
+            <div class="section-title section-title--spaced" data-tooltip="Which AI tools were invoked during your prompts today — e.g. web search, image generation, code interpreter">Tools Used Today</div>
+            <div class="mini-list" id="toolBreakdown"></div>
+
+            <div class="section-title section-title--spaced">Top Trackers Today</div>
+            <div class="mini-list" id="topTrackers"></div>
+
+            <div class="section-title section-title--spaced">Platform Split</div>
+            <div id="platformSplit"></div>
           </div>
         </section>
 
