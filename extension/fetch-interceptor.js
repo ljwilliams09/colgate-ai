@@ -177,6 +177,35 @@
           ) {
             response_chars += obj.choices[0].delta.content.length;
           }
+
+          // claude tool detection
+          if (type === "content_block_start") {
+            const contentBlock = obj.content_block || {};
+            if (contentBlock.type === "tool_use") {
+              tool_invoked = true;
+              tool_name = contentBlock.name || null;
+              turn_use_case = "tool_use";
+              dbg("claude tool_use detected:", { tool_name });
+            }
+          }
+
+          if (type === "content_block_delta") {
+            const delta = obj.delta || {};
+            if (delta.type === "input_json_delta") {
+              tool_invoked = true;
+              dbg("claude tool input delta detected");
+            }
+          }
+
+          if (type === "message_delta") {
+            const deltaObj = obj.delta || {};
+            if (deltaObj.stop_reason === "tool_use") {
+              tool_invoked = true;
+              turn_use_case = "tool_use";
+              dbg("claude message stop_reason tool_use detected");
+            }
+          }
+
           if (type === "server_ste_metadata") {
             const m = obj.metadata || {};
             tool_invoked = Boolean(m.tool_invoked);
