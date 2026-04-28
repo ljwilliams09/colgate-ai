@@ -29,7 +29,7 @@ flowchart LR
 
 ### Step 1 — Intercepting the Request
 
-**File: `fetch-interceptor.js`** *(runs inside the webpage itself)*
+**File: `fetch-interceptor.js`** _(runs inside the webpage itself)_
 
 Most website use a browser function called `window.fetch()` to make network requests. This script **replaces** that function with its own version the moment the page loads. The page does not know so it still calls `window.fetch()` like normal, but now our code runs first.
 
@@ -50,11 +50,11 @@ If so, then it:
 
 From the stream it extracts:
 
-| Event Type | What It Tells Us |
-| --- | --- |
-| `server_ste_metadata` | Tool used, turn mode (text/search/shopping), model name |
-| `url_moderation` | URLs the AI fetched on your behalf (e.g. during web search) |
-| `message_start` | Model name (Claude uses this instead of metadata) |
+| Event Type            | What It Tells Us                                            |
+| --------------------- | ----------------------------------------------------------- |
+| `server_ste_metadata` | Tool used, turn mode (text/search/shopping), model name     |
+| `url_moderation`      | URLs the AI fetched on your behalf (e.g. during web search) |
+| `message_start`       | Model name (Claude uses this instead of metadata)           |
 
 If the stream has **zero SSE events**, it was a background/noise request (like a telemetry ping) — the script ignores it.
 
@@ -64,7 +64,7 @@ Finally, it fires a `postMessage` with all the captured data tagged with `__aiCa
 
 ### Step 2 — Crossing the Extension Boundary
 
-**File: `relay.js`** *(runs in the extension's isolated world)*
+**File: `relay.js`** _(runs in the extension's isolated world)_
 
 **The Issue:**
 
@@ -100,7 +100,7 @@ flowchart LR
 
 ### Step 3 — Storing the Data
 
-**File: `background.js`** *(runs as a Chrome service worker)*
+**File: `background.js`** _(runs as a Chrome service worker)_
 
 The background script manages all shared state. When it receives an `ai-capture` message from relay.js, it:
 
@@ -115,7 +115,7 @@ The background script manages all shared state. When it receives an `ai-capture`
 
 ### Step 3b — Third-Party Domain Tracking
 
-**File: `background.js`** *(webRequest API)*
+**File: `background.js`** _(webRequest API)_
 
 Adding on to storing send data, the background script also watches **network request** the browser makes using Chrome's `webRequest` API. This works like a browser-level TShark, it sees all traffic, not just AI requests.
 
@@ -149,30 +149,30 @@ When opening the extension's side panel, `sidepanel.js` asks the background work
 
 ## Full File Reference
 
-| File | Where It Runs | What It Does |
-|---|---|---|
-| `fetch-interceptor.js` | Inside the webpage (MAIN world) | Patches `window.fetch`, reads SSE stream, extracts data |
-| `relay.js` | Extension isolated world | Bridges page → extension message boundary |
-| `background.js` | Chrome service worker | Stores sends, manages badge, notifies UI |
-| `sidepanel.html/js/css` | Extension side panel | Renders the captured send data visually |
-| `popup.html/js/css` | Extension popup | Minimal UI shown on icon click |
-| `manifest.json` | Chrome config | Declares permissions, which scripts run where, side panel path |
+| File                    | Where It Runs                   | What It Does                                                   |
+| ----------------------- | ------------------------------- | -------------------------------------------------------------- |
+| `fetch-interceptor.js`  | Inside the webpage (MAIN world) | Patches `window.fetch`, reads SSE stream, extracts data        |
+| `relay.js`              | Extension isolated world        | Bridges page → extension message boundary                      |
+| `background.js`         | Chrome service worker           | Stores sends, manages badge, notifies UI                       |
+| `sidepanel.html/js/css` | Extension side panel            | Renders the captured send data visually                        |
+| `popup.html/js/css`     | Extension popup                 | Minimal UI shown on icon click                                 |
+| `manifest.json`         | Chrome config                   | Declares permissions, which scripts run where, side panel path |
 
 ---
 
 ## Info Extension Records Per Send
 
-| Field | How We Get It | What It Means |
-|---|---|---|
-| `prompt_preview` | Parsed from POST request body | The first 200 characters of what the user typed |
-| `ttfb_ms` | `Date.now()` before and after fetch | How long (ms) before the AI sent the first byte back |
-| `turn_use_case` | SSE `server_ste_metadata` event | Mode: `text`, `search`, `shopping`, etc. |
-| `tool_invoked` | SSE `server_ste_metadata` event | `true` if the AI used a tool (e.g. web search) |
-| `tool_name` | SSE `server_ste_metadata` event | Name of the tool used (e.g. `browser`) |
-| `model_slug` | SSE metadata or `message_start` | Which model answered (e.g. `gpt-4o`, `claude-3-5-sonnet`) |
-| `response_bytes` | Counted from stream chunks | Total size of the streamed response |
-| `sse_event_count` | Counted SSE lines | Number of streaming data events in the response |
-| `server_fetched_urls` | SSE `url_moderation` events | URLs the model went out and fetched (web search results) |
+| Field                  | How We Get It                            | What It Means                                                       |
+| ---------------------- | ---------------------------------------- | ------------------------------------------------------------------- |
+| `prompt_preview`       | Parsed from POST request body            | The first 200 characters of what the user typed                     |
+| `ttfb_ms`              | `Date.now()` before and after fetch      | How long (ms) before the AI sent the first byte back                |
+| `turn_use_case`        | SSE `server_ste_metadata` event          | Mode: `text`, `search`, `shopping`, etc.                            |
+| `tool_invoked`         | SSE `server_ste_metadata` event          | `true` if the AI used a tool (e.g. web search)                      |
+| `tool_name`            | SSE `server_ste_metadata` event          | Name of the tool used (e.g. `browser`)                              |
+| `model_slug`           | SSE metadata or `message_start`          | Which model answered (e.g. `gpt-4o`, `claude-3-5-sonnet`)           |
+| `response_bytes`       | Counted from stream chunks               | Total size of the streamed response                                 |
+| `sse_event_count`      | Counted SSE lines                        | Number of streaming data events in the response                     |
+| `server_fetched_urls`  | SSE `url_moderation` events              | URLs the model went out and fetched (web search results)            |
 | `third_party_contacts` | `webRequest` buffer + Disconnect.me list | Third-party domains contacted during the send, with category labels |
 
 ---
@@ -181,9 +181,65 @@ When opening the extension's side panel, `sidepanel.js` asks the background work
 
 Permissions Needed (from `manifest.json`)
 
-| Permission | Why |
-| --- | --- |
-| `storage` | To save captured sends across sessions |
-| `sidePanel` | To show the side panel UI |
-| `host_permissions: chatgpt.com, claude.ai` | To inject the interceptor scripts into those pages only |
-| `webRequest` + `<all_urls>` | To observe all browser network requests for third-party domain tracking |
+| Permission                                 | Why                                                                     |
+| ------------------------------------------ | ----------------------------------------------------------------------- |
+| `storage`                                  | To save captured sends across sessions                                  |
+| `sidePanel`                                | To show the side panel UI                                               |
+| `host_permissions: chatgpt.com, claude.ai` | To inject the interceptor scripts into those pages only                 |
+| `webRequest` + `<all_urls>`                | To observe all browser network requests for third-party domain tracking |
+
+## Aggregation Setup
+
+A key part to presenting the network data of someones AI use is helping them track it over time. Our extension now stores **aggregated statistics** that persist across browser sessions in `chrome.storage.local`.
+
+### Setup
+
+1.  `fetch-interceptor.js`
+
+- captures requests
+- postMessage sends to relay.js
+
+2. `relay.js`
+   - bridge to chrome APIs (chrome.runtime.sendMessage)
+   - sends to background.js
+3. `background.js`
+   - service worker
+   - calls addCapture() -> handles aggregation of new network traffic data, adds it to the data totals
+4. `storage-aggregator.js`
+   - helper functions for aggregation and handling aggregated data
+5. `aggregation-api.js`
+   - API for returning selected data from chrome.storage.local and parsing the object in which all the aggregations are stored in
+6. `sidepanel.js`
+   - queries aggregation_api.js to return the relevant data
+
+Each day's aggregation includes:
+
+### Counters
+
+- **total_captures**: Total number of requests captured
+- **platforms**: Breakdown by ChatGPT vs Claude
+- **models**: Usage count per model, distinct within ChatGPT and Claude
+
+- **tools_invoked**: Which tools were used (web_search, code_interpreter, etc.)
+- **turn_use_cases**: Type breakdown: thinking, text, etc.
+- **server_fetched_domains**: Third-party domains contacted (with counts)
+
+### Response Statistics
+
+- **total_bytes**: Sum of all response bytes
+- **total_chars**: Sum of all response characters
+- **avg_bytes**: Average response size
+- **max_bytes / min_bytes**: Response size range
+- **total_sse_events**: Total SSE stream events
+
+### Latency Statistics
+
+- **total_ttfb_ms**: Sum of time-to-first-byte
+- **avg_ttfb_ms**: Average latency
+- **max_ttfb_ms / min_ttfb_ms**: Latency range
+
+### Prompt Statistics
+
+- **total_length**: Sum of prompt characters sent
+- **avg_length**: Average prompt size
+- **max_length / min_length**: Prompt size range

@@ -74,6 +74,8 @@ Total Requests and Responses: 537
 - What types of tools does do these models use?
 - What is the network structure
 
-### Limitations
+### Limitations and Future Work
 
-- If an AI service uses a
+There are some limitations to this project in terms of the data that we capture and the insights provided. First, it is clear that AI services have integrated web searches into their chat conversations with the users. The tool tracker does allow us to see some of these uses of tools, however that is only for services that provide information on it through returned metadata. It is possible that different AI services might include network calls such as web searches in their backend to provide information to the user in the final response, but that network traffic is not available to use.
+
+One insight that we can't infer from network traffic is how much information a
