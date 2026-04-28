@@ -264,8 +264,8 @@ function renderOverview(sends, todayAgg) {
            <div class="platform-bar-fill platform-bar-claude"  style="width:${claudePct}%"></div>
          </div>
          <div class="platform-labels">
-           <span class="platform-label"><span class="platform-dot platform-dot--chatgpt"></span>ChatGPT ${chatgpt}</span>
-           <span class="platform-label"><span class="platform-dot platform-dot--claude"></span>Claude ${claude}</span>
+           <span class="platform-label"><span class="platform-dot platform-dot--chatgpt"></span>ChatGPT ${chatgpt} sends</span>
+           <span class="platform-label"><span class="platform-dot platform-dot--claude"></span>Claude ${claude} sends</span>
          </div>`;
   }
 }
@@ -281,7 +281,7 @@ function renderLivestream(sends) {
     return;
   }
 
-  cards.innerHTML = sends.slice(0, 5).map(buildCard).join("");
+  cards.innerHTML = sends.slice(0, 20).map(buildCard).join("");
 }
 
 
