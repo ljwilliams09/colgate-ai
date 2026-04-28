@@ -270,18 +270,59 @@ function renderOverview(sends, todayAgg) {
   }
 }
 
-function renderLivestream(sends) {
-  const cards =
-    document.getElementById("livestreamCards") ||
-    document.getElementById("cards");
-  if (!cards) return;
+let activeLivestreamPlatform = "chatgpt";
+let livestreamSubtabsReady = false;
 
-  if (!sends.length) {
-    cards.innerHTML = `<div class="empty">No sends captured yet.<br>Chat with ChatGPT or Claude and it will show up here.</div>`;
-    return;
+function setupLivestreamSubtabs(sends) {
+  // Set default platform from most recent send (only on first load)
+  if (!livestreamSubtabsReady && sends.length) {
+    activeLivestreamPlatform = sends[0].platform === "claude" ? "claude" : "chatgpt";
   }
 
-  cards.innerHTML = sends.slice(0, 20).map(buildCard).join("");
+  const subtabs = document.querySelectorAll("#livestreamSubtabs .subtab-btn");
+  const slider = document.getElementById("livestreamSlider");
+
+  function syncToggle() {
+    subtabs.forEach((b) =>
+      b.classList.toggle("is-active", b.dataset.platform === activeLivestreamPlatform),
+    );
+    if (slider) slider.classList.toggle("is-claude", activeLivestreamPlatform === "claude");
+  }
+
+  syncToggle();
+
+  if (livestreamSubtabsReady) return;
+  livestreamSubtabsReady = true;
+
+  subtabs.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      activeLivestreamPlatform = btn.dataset.platform;
+      syncToggle();
+      renderLivestreamCards(window._lastSends || []);
+    });
+  });
+}
+
+function renderLivestreamCards(sends) {
+  const cards = document.getElementById("livestreamCards");
+  if (!cards) return;
+  cards.classList.toggle("is-claude", activeLivestreamPlatform === "claude");
+  const filtered = sends.filter((s) =>
+    activeLivestreamPlatform === "claude"
+      ? s.platform === "claude"
+      : s.platform !== "claude",
+  );
+  if (!filtered.length) {
+    const other = activeLivestreamPlatform === "claude" ? "ChatGPT" : "Claude";
+    cards.innerHTML = `<div class="empty">No ${activeLivestreamPlatform === "claude" ? "Claude" : "ChatGPT"} sends yet.<br>Switch to ${other} to see those captures.</div>`;
+    return;
+  }
+  cards.innerHTML = filtered.slice(0, 20).map(buildCard).join("");
+}
+
+function renderLivestream(sends) {
+  window._lastSends = sends;
+  renderLivestreamCards(sends);
 }
 
 
@@ -383,6 +424,7 @@ async function load() {
 
   const sends = Array.isArray(sendsResp?.sends) ? sendsResp.sends : [];
   renderOverview(sends, todayAgg);
+  setupLivestreamSubtabs(sends);
   renderLivestream(sends);
   await loadTrackers();
   renderTimewise(allAggs);

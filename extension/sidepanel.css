@@ -344,6 +344,11 @@ body {
   gap: 8px;
 }
 
+.cards.is-claude .send-card {
+  border-color: rgba(192, 92, 0, 0.45);
+  box-shadow: 0 0 0 1px rgba(192, 92, 0, 0.15), 0 2px 12px rgba(192, 92, 0, 0.1);
+}
+
 .send-card {
   background: #131a25;
   border: 1px solid #344257;
@@ -475,6 +480,53 @@ body {
 .timeline-note {
   color: #9bb0ca;
   font-size: 12px;
+}
+
+.livestream-toggle {
+  position: relative;
+  display: flex;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px;
+  margin: 10px 0 14px;
+}
+
+.livestream-toggle-slider {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  background: linear-gradient(120deg, #0a8796, #0ea5b7);
+  border-radius: 4px;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.22s ease;
+  pointer-events: none;
+}
+
+.livestream-toggle-slider.is-claude {
+  transform: translateX(100%);
+  background: linear-gradient(120deg, #7c3400, #c05c00);
+}
+
+.subtab-btn {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.2s;
+  border-radius: 4px;
+}
+
+.subtab-btn.is-active {
+  color: #fff;
 }
 
 .timeline {

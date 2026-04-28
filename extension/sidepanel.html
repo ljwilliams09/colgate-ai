@@ -77,7 +77,11 @@
 
         <section class="panel" data-panel="livestream">
           <div class="panel-inner">
-            <div class="section-title">Livestream</div>
+            <div class="livestream-toggle" id="livestreamSubtabs">
+              <div class="livestream-toggle-slider" id="livestreamSlider"></div>
+              <button class="subtab-btn is-active" data-platform="chatgpt">ChatGPT</button>
+              <button class="subtab-btn" data-platform="claude">Claude</button>
+            </div>
             <div class="timeline-note">Recent captures as they arrive (20 max).</div>
             <div class="cards" id="livestreamCards"></div>
           </div>
