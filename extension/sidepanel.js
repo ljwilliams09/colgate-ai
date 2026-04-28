@@ -158,18 +158,8 @@ function buildCard(d) {
 
   const modePill = `<span class="pill" style="background:${s.bg};border-color:${s.border};color:${s.color}">
     <span class="pill-label">${esc(uc)}</span>
-    <span class="pill-sub">turn mode</span>
+    <span class="pill-sub">${d.tool_name ? esc(d.tool_name) : "no tool"}</span>
   </span>`;
-
-  const toolPill = d.tool_name
-    ? `<span class="pill" style="background:${s.bg};border-color:${s.border};color:${s.color}">
-        <span class="pill-label">${esc(d.tool_name)}</span>
-        <span class="pill-sub">tool</span>
-       </span>`
-    : `<span class="pill pill-no-tool">
-        <span class="pill-label">no tool</span>
-        <span class="pill-sub">turn</span>
-       </span>`;
 
   const modelPill = d.model_slug
     ? `<span class="pill pill-model">
@@ -205,7 +195,7 @@ function buildCard(d) {
           <div class="card-ttfb">TTFB ${d.ttfb_ms != null ? Math.round(d.ttfb_ms) + " ms" : "-"}</div>
         </div>
       </div>
-      <div class="card-meta">${modePill}${toolPill}${modelPill}</div>
+      <div class="card-meta">${modePill}${modelPill}</div>
       ${thirdPartyHtml}
       <div class="card-footer">${esc(d.send_id)} · ${platform}</div>
     </div>`;
@@ -241,11 +231,14 @@ function renderOverview(sends, todayAgg) {
       ? `${Math.round((withTool.length / sends.length) * 100)}%`
       : "-",
   );
+  const aggAvgTtfb = todayAgg?.latency_stats?.avg_ttfb_ms;
   setText(
     "avgTtfb",
-    ttfbVals.length
-      ? `${Math.round(ttfbVals.reduce((a, b) => a + b, 0) / ttfbVals.length)} ms`
-      : "-",
+    aggAvgTtfb != null
+      ? `${Math.round(aggAvgTtfb)} ms`
+      : ttfbVals.length
+        ? `${Math.round(ttfbVals.reduce((a, b) => a + b, 0) / ttfbVals.length)} ms`
+        : "-",
   );
   setText(
     "avgThirdParties",
@@ -269,13 +262,49 @@ function renderOverview(sends, todayAgg) {
   if (toolBreakdown) {
     const entries = topEntries(todayAgg?.tools_invoked || {}, 6);
     toolBreakdown.innerHTML = entries.length
-      ? entries
-          .map(
-            ([label, value]) =>
-              `<div class="mini-row"><span class="mini-label">${esc(label)}</span><span class="mini-value">${esc(value)}</span></div>`,
-          )
-          .join("")
+      ? entries.map(([label, value]) =>
+          `<div class="tool-row">
+            <span class="tool-row-name">${esc(label)}</span>
+            <span class="tool-row-badge">${esc(value)}</span>
+          </div>`
+        ).join("")
       : `<div class="empty">No tool usage yet</div>`;
+  }
+
+  const topTrackers = document.getElementById("topTrackers");
+  if (topTrackers) {
+    const entries = topEntries(todayAgg?.server_fetched_domains || {}, 5);
+    const max = entries[0]?.[1] || 1;
+    topTrackers.innerHTML = entries.length
+      ? `<div class="tracker-list">${entries.map(([domain, count], i) =>
+          `<div class="tracker-entry">
+            <div class="tracker-entry-bar" style="width:${Math.round((count / max) * 100)}%"></div>
+            <span class="tracker-rank">${i + 1}</span>
+            <span class="tracker-domain">${esc(domain)}</span>
+            <span class="tracker-count">${count}</span>
+          </div>`
+        ).join("")}</div>`
+      : `<div class="empty">No trackers detected today</div>`;
+  }
+
+  const platformSplit = document.getElementById("platformSplit");
+  if (platformSplit) {
+    const platforms = todayAgg?.platforms || {};
+    const chatgpt = Number(platforms["chatgpt"] || 0);
+    const claude  = Number(platforms["claude"]  || 0);
+    const total   = chatgpt + claude || 1;
+    const chatgptPct = Math.round((chatgpt / total) * 100);
+    const claudePct  = 100 - chatgptPct;
+    platformSplit.innerHTML = chatgpt + claude === 0
+      ? `<div class="empty">No data yet</div>`
+      : `<div class="platform-bar">
+           <div class="platform-bar-fill platform-bar-chatgpt" style="width:${chatgptPct}%"></div>
+           <div class="platform-bar-fill platform-bar-claude"  style="width:${claudePct}%"></div>
+         </div>
+         <div class="platform-labels">
+           <span class="platform-label"><span class="platform-dot platform-dot--chatgpt"></span>ChatGPT ${chatgpt}</span>
+           <span class="platform-label"><span class="platform-dot platform-dot--claude"></span>Claude ${claude}</span>
+         </div>`;
   }
 }
 
@@ -378,15 +407,20 @@ function renderTimewise(allAggs) {
     .join("");
 }
 
+let activePanelIndex = 0;
+
 function setupSwipe() {
   const viewport = document.getElementById("panelViewport");
   if (!viewport) return;
   const navButtons = [...document.querySelectorAll("#swipeNav .nav-pill")];
   const dots = [...document.querySelectorAll("#dots .dot")];
+  const clearBtn = document.getElementById("clearBtn");
 
   function setActive(index) {
+    activePanelIndex = index;
     navButtons.forEach((b, i) => b.classList.toggle("is-active", i === index));
     dots.forEach((d, i) => d.classList.toggle("is-active", i === index));
+    if (clearBtn) clearBtn.style.display = index <= 1 ? "" : "none";
   }
 
   function goTo(index) {
@@ -460,10 +494,40 @@ async function load() {
   renderTimewise(allAggs);
 }
 
+function startClock() {
+  const el = document.getElementById("todayClock");
+  if (!el) return;
+  function tick() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, "0");
+    const m = String(now.getMinutes()).padStart(2, "0");
+    const s = String(now.getSeconds()).padStart(2, "0");
+    el.textContent = `${h}:${m}:${s} — resets at midnight`;
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+function scheduleMidnightClear() {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  const msUntilMidnight = midnight - now;
+  setTimeout(async () => {
+    await chrome.runtime.sendMessage({ type: "clear-aggregations" });
+    await load();
+    scheduleMidnightClear();
+  }, msUntilMidnight);
+}
+
 document.getElementById("clearBtn").addEventListener("click", async () => {
-  await chrome.runtime.sendMessage({ type: "clear-sends" });
-  await chrome.runtime.sendMessage({ type: "clear-aggregations" });
-  await chrome.runtime.sendMessage({ type: "clear-tracker-log" });
+  if (activePanelIndex === 0) {
+    // Dashboard — clear aggregation stats only
+    await chrome.runtime.sendMessage({ type: "clear-aggregations" });
+  } else {
+    // Livestream — clear captured sends only
+    await chrome.runtime.sendMessage({ type: "clear-sends" });
+  }
   await load();
 });
 
@@ -474,6 +538,8 @@ chrome.runtime.onMessage.addListener((message) => {
 
 bindTooltips();
 setupSwipe();
+startClock();
+scheduleMidnightClear();
 load().catch(() => {});
 
 // ── Trackers tab ───────────────────────────────────────────────────────────────

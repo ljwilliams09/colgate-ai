@@ -33,6 +33,7 @@ body {
   padding: 14px 14px 10px;
   border-bottom: 1px solid var(--line);
   background: rgba(12, 16, 22, 0.8);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 
@@ -153,6 +154,51 @@ body {
   gap: 8px;
 }
 
+.stat-box--wide { grid-column: span 2; }
+
+.platform-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #1e2a3a;
+  margin-bottom: 8px;
+}
+.platform-bar-fill { height: 100%; transition: width 0.3s ease; }
+.platform-bar-chatgpt { background: var(--accent); }
+.platform-bar-claude  { background: var(--accent-2); }
+
+.platform-labels {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.platform-label { display: flex; align-items: center; gap: 5px; }
+.platform-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.platform-dot--chatgpt { background: var(--accent); }
+.platform-dot--claude  { background: var(--accent-2); }
+
+.section-title--spaced { margin-top: 4px; }
+
+.today-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.today-clock {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+}
+
 .stat-box {
   border: 1px solid #39465a;
   border-radius: 12px;
@@ -178,9 +224,94 @@ body {
 .mini-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
+/* ── Tool rows ── */
+.tool-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid #253040;
+  border-radius: 10px;
+  background: #111827;
+  border-left: 3px solid var(--accent);
+}
+
+.tool-row-name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 700;
+  color: #e2eeff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-row-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: #0e1116;
+  background: var(--accent);
+  border-radius: 999px;
+  padding: 2px 8px;
+  flex-shrink: 0;
+}
+
+/* ── Tracker leaderboard ── */
+.tracker-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #253040;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #111827;
+}
+
+.tracker-entry {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #1a2535;
+  position: relative;
+}
+
+.tracker-entry:last-child { border-bottom: none; }
+
+.tracker-entry-bar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: rgba(14, 165, 183, 0.07);
+  pointer-events: none;
+}
+
+.tracker-rank {
+  font-size: 10px;
+  font-weight: 800;
+  color: #4a6080;
+  text-align: right;
+}
+
+.tracker-domain {
+  font-size: 12px;
+  font-weight: 600;
+  color: #cce0ff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tracker-count {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* fallback for other mini-rows still in use */
 .mini-row {
   display: flex;
   justify-content: space-between;
