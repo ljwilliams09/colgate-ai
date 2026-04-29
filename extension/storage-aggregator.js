@@ -84,8 +84,12 @@ function initializeDailyAggregation() {
     response_stats: {
       total_bytes: 0,
       total_chars: 0,
+      total_words: 0,
+      total_est_tokens: 0,
       avg_bytes: 0,
       avg_chars: 0,
+      avg_words: 0,
+      avg_est_tokens: 0,
       max_bytes: 0,
       min_bytes: Infinity,
       total_sse_events: 0,
@@ -112,6 +116,22 @@ function incrementCounter(obj, key, amount = 1) {
   obj[key] = (obj[key] || 0) + amount;
 }
 
+function estimateResponseTokens(payload) {
+  const directTokens = Number(payload.response_est_tokens || 0);
+  if (directTokens > 0) return directTokens;
+
+  const words = Number(payload.response_words || 0);
+  if (words > 0) return Math.ceil(words * 1.3);
+
+  const chars = Number(payload.response_chars || 0);
+  if (chars > 0) return Math.ceil(chars / 4);
+
+  const bytes = Number(payload.response_bytes || 0);
+  if (bytes > 0) return Math.ceil(bytes / 4);
+
+  return 0;
+}
+
 // capture request for today's aggregation
 async function addCapture(payload) {
   const dateKey = getTodayKey();
@@ -123,6 +143,20 @@ async function addCapture(payload) {
   }
 
   const today = aggregations[dateKey];
+
+  // Backward compatibility for rollups created before word metrics existed
+  if (typeof today.response_stats.total_words !== "number") {
+    today.response_stats.total_words = 0;
+  }
+  if (typeof today.response_stats.avg_words !== "number") {
+    today.response_stats.avg_words = 0;
+  }
+  if (typeof today.response_stats.total_est_tokens !== "number") {
+    today.response_stats.total_est_tokens = 0;
+  }
+  if (typeof today.response_stats.avg_est_tokens !== "number") {
+    today.response_stats.avg_est_tokens = 0;
+  }
 
   // Total captures
   today.total_captures++;
@@ -164,6 +198,19 @@ async function addCapture(payload) {
     today.response_stats.total_chars += payload.response_chars;
     today.response_stats.avg_chars =
       today.response_stats.total_chars / today.total_captures;
+  }
+
+  if (typeof payload.response_words === "number") {
+    today.response_stats.total_words += payload.response_words;
+    today.response_stats.avg_words =
+      today.response_stats.total_words / today.total_captures;
+  }
+
+  const estimatedTokens = estimateResponseTokens(payload);
+  if (estimatedTokens > 0) {
+    today.response_stats.total_est_tokens += estimatedTokens;
+    today.response_stats.avg_est_tokens =
+      today.response_stats.total_est_tokens / today.total_captures;
   }
 
   if (typeof payload.sse_event_count === "number") {

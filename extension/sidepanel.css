@@ -154,7 +154,9 @@ body {
   gap: 8px;
 }
 
-.stat-box--wide { grid-column: span 2; }
+.stat-box--wide {
+  grid-column: span 2;
+}
 
 .platform-bar {
   display: flex;
@@ -164,9 +166,16 @@ body {
   background: #1e2a3a;
   margin-bottom: 8px;
 }
-.platform-bar-fill { height: 100%; transition: width 0.3s ease; }
-.platform-bar-chatgpt { background: var(--accent); }
-.platform-bar-claude  { background: var(--accent-2); }
+.platform-bar-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.platform-bar-chatgpt {
+  background: var(--accent);
+}
+.platform-bar-claude {
+  background: var(--accent-2);
+}
 
 .platform-labels {
   display: flex;
@@ -175,16 +184,27 @@ body {
   font-weight: 700;
   color: var(--muted);
 }
-.platform-label { display: flex; align-items: center; gap: 5px; }
+.platform-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
 .platform-dot {
-  width: 8px; height: 8px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
-.platform-dot--chatgpt { background: var(--accent); }
-.platform-dot--claude  { background: var(--accent-2); }
+.platform-dot--chatgpt {
+  background: var(--accent);
+}
+.platform-dot--claude {
+  background: var(--accent-2);
+}
 
-.section-title--spaced { margin-top: 4px; }
+.section-title--spaced {
+  margin-top: 4px;
+}
 
 .today-header {
   display: flex;
@@ -279,11 +299,15 @@ body {
   position: relative;
 }
 
-.tracker-entry:last-child { border-bottom: none; }
+.tracker-entry:last-child {
+  border-bottom: none;
+}
 
 .tracker-entry-bar {
   position: absolute;
-  left: 0; top: 0; bottom: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
   background: rgba(14, 165, 183, 0.07);
   pointer-events: none;
 }
@@ -508,6 +532,81 @@ body {
   gap: 8px;
 }
 
+.timeline-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #33445c;
+  border-radius: 10px;
+  background: #141d2a;
+  padding: 8px 10px;
+}
+
+.timeline-controls label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #cfddf2;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.timeline-controls select {
+  width: 64%;
+  border: 1px solid #3a4b65;
+  background: #0f1722;
+  color: #e8f2ff;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 8px;
+}
+
+.timeline-chart-wrap {
+  border: 1px solid #33445c;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #131c29 0%, #101722 100%);
+  padding: 8px;
+}
+
+.timeline-chart {
+  width: 100%;
+  height: 180px;
+  display: block;
+}
+
+.timeline-chart-grid {
+  stroke: #243347;
+  stroke-width: 1;
+}
+
+.timeline-chart-axis {
+  stroke: #3c536d;
+  stroke-width: 1;
+}
+
+.timeline-chart-area {
+  fill: rgba(14, 165, 183, 0.14);
+}
+
+.timeline-chart-line {
+  fill: none;
+  stroke: #1dc6db;
+  stroke-width: 2.5;
+}
+
+.timeline-chart-point {
+  fill: #f59e0b;
+  stroke: #0b1119;
+  stroke-width: 1.2;
+}
+
+.timeline-chart-label {
+  fill: #9cb0cd;
+  font-size: 10px;
+  font-weight: 700;
+}
+
 .timeline-row {
   border: 1px solid #35455b;
   background: #151d2a;
@@ -555,6 +654,66 @@ body {
   color: #aebddb;
   display: flex;
   justify-content: space-between;
+}
+
+.timeline-lifetime {
+  margin-top: 10px;
+  border: 1px solid #435773;
+  background: linear-gradient(165deg, #1a2536, #141d2b);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.timeline-lifetime-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.timeline-lifetime-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #e8f3ff;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.timeline-lifetime-range {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9ab0cd;
+}
+
+.timeline-lifetime-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.timeline-lifetime-stat {
+  border: 1px solid #30425c;
+  background: #101826;
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeline-lifetime-k {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9fb5d3;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.timeline-lifetime-v {
+  font-size: 14px;
+  font-weight: 800;
+  color: #edf7ff;
 }
 
 .empty {

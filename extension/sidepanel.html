@@ -15,7 +15,7 @@
     </div>
 
     <div class="tab-nav" style="display: none">
-      <button class="tab-btn active" data-tab="tab-captures">Captures</button>
+      <button class="tab-btn active" data-tab="tab-captures">Prompts</button>
       <button class="tab-btn" data-tab="tab-trackers">Trackers</button>
     </div>
 
@@ -64,13 +64,22 @@
               </div>
             </div>
 
-            <div class="section-title section-title--spaced" data-tooltip="Which AI tools were invoked during your prompts today — e.g. web search, image generation, code interpreter">Tools Used Today</div>
+            <div
+              class="section-title section-title--spaced"
+              data-tooltip="Which AI tools were invoked during your prompts today — e.g. web search, image generation, code interpreter"
+            >
+              Tools Used Today
+            </div>
             <div class="mini-list" id="toolBreakdown"></div>
 
-            <div class="section-title section-title--spaced">Top Trackers Today</div>
+            <div class="section-title section-title--spaced">
+              Top Trackers Today
+            </div>
             <div class="mini-list" id="topTrackers"></div>
 
-            <div class="section-title section-title--spaced">Platform Split</div>
+            <div class="section-title section-title--spaced">
+              Platform Split
+            </div>
             <div id="platformSplit"></div>
           </div>
         </section>
@@ -124,6 +133,26 @@
             <div class="section-title">Timewise Information</div>
             <div class="timeline-note">
               Daily rollups from persistent storage
+            </div>
+            <div class="timeline-controls">
+              <label for="timeMetric">Metric</label>
+              <select id="timeMetric">
+                <option value="total_captures">Total Prompts</option>
+                <option value="avg_ttfb_ms">Average TTFB (ms)</option>
+                <option value="avg_bytes">Average Response Size</option>
+                <option value="total_est_tokens">
+                  Estimated Response Tokens
+                </option>
+              </select>
+            </div>
+            <div class="timeline-chart-wrap">
+              <svg
+                id="timelineChart"
+                class="timeline-chart"
+                viewBox="0 0 600 180"
+                preserveAspectRatio="none"
+                aria-label="Timewise aggregation chart"
+              ></svg>
             </div>
             <div class="timeline" id="timeline"></div>
           </div>

@@ -4,7 +4,7 @@
 
 (() => {
   // Debug flag — logs to console so you can see what's being captured
-  const DEBUG = false;
+  const DEBUG = true;
   function dbg(...args) {
     if (DEBUG) console.log("[AI Capture]", ...args);
   }
@@ -115,7 +115,21 @@
     }
   }
 
+  async function getRequestBodyText(input, init) {
+    if (typeof init?.body === "string") return init.body;
+    if (input instanceof Request) {
+      try {
+        return await input.clone().text();
+      } catch (_) {
+        return "";
+      }
+    }
+    return "";
+  }
+
   // ── SSE stream parser ──────────────────────────────────────────────────
+
+  // NOTE: switched to accumulating fullText for token estimation.
 
   // Reads the SSE response stream and gets the tool, model, turn type, and byte count, then posts the result to relay.js
   async function processStream(stream, meta) {
@@ -124,13 +138,61 @@
 
     let lineBuffer = "";
     let response_bytes = 0;
-    let response_chars = 0;
+    let fullText = "";
     let sse_event_count = 0;
     let tool_invoked = false;
     let tool_name = null;
     let turn_use_case = null;
     let model_slug = null;
     const server_fetched_urls = [];
+    let loggedDeltaShape = false;
+    let loggedChatGptTextShape = false;
+
+    // Extract text from a full SSE object (ChatGPT or Claude shapes)
+    function extractText(obj) {
+      const delta = obj.delta || obj.choices?.[0]?.delta;
+      if (!delta) return null;
+
+      let out = "";
+
+      // STRING delta
+      if (typeof delta === "string") {
+        return delta;
+      }
+
+      // direct fields
+      if (typeof delta.content === "string") {
+        out += delta.content;
+      }
+
+      if (typeof delta.text === "string") {
+        out += delta.text;
+      }
+
+      // array form: [{text: "..."}]
+      if (Array.isArray(delta.content)) {
+        for (const part of delta.content) {
+          if (typeof part === "string") out += part;
+          else if (part?.text) out += part.text;
+          else if (part?.content) out += part.content;
+        }
+      }
+
+      // nested fallback (some ChatGPT variants)
+      if (delta.message?.content) {
+        out += extractText({ delta: delta.message });
+      }
+
+      // Claude-style reasoning safe handling
+      if (Array.isArray(delta.reasoning_content)) {
+        for (const p of delta.reasoning_content) {
+          if (typeof p === "string") out += p;
+          else out += p?.text || p?.content || "";
+        }
+      }
+
+      return out.length ? out : null;
+    }
 
     try {
       while (true) {
@@ -160,22 +222,16 @@
           if (!obj || typeof obj !== "object") continue;
 
           const type = obj.type || "";
-          // response character counting
 
-          // claude text delta
-          if (
-            type == "content_block_delta" &&
-            typeof obj.delta?.text == "string"
-          ) {
-            response_chars += obj.delta.text.length;
+          // filter out reasoning / hidden streams
+          if (obj.type === "thinking_delta" || obj.is_reasoning) {
+            continue;
           }
+          // response character counting
+          const text = extractText(obj);
 
-          // chatgpt text delta
-          if (
-            obj.choices?.[0]?.delta?.content &&
-            typeof obj.choices[0].delta.content === "string"
-          ) {
-            response_chars += obj.choices[0].delta.content.length;
+          if (text) {
+            fullText += text;
           }
 
           // claude tool detection
@@ -249,6 +305,10 @@
     // Default turn_use_case to "text" if the stream had no metadata event
     if (!turn_use_case) turn_use_case = "text";
 
+    // Final token estimate based only on accumulated fullText length
+    const response_est_tokens = Math.ceil(
+      fullText.trim().split(/\s+/).length * 1.33,
+    );
     dbg("send captured:", {
       turn_use_case,
       tool_name,
@@ -256,37 +316,40 @@
       ttfb_ms: meta.ttfb_ms,
     });
 
-    window.postMessage(
-      {
-        __aiCapture: true,
-        payload: {
-          platform: meta.platform,
-          url: meta.url,
-          capturedAt: meta.capturedAt,
-          ttfb_ms: meta.ttfb_ms,
-          prompt_preview: meta.prompt_preview,
-          prompt_length: meta.prompt_length, // added prompt length to track total information being recieved
-          response_bytes,
-          response_chars,
-          sse_event_count,
-          tool_invoked,
-          tool_name,
-          turn_use_case,
-          model_slug,
-          server_fetched_urls: server_fetched_urls.map((u) => {
-            try {
-              return {
-                url: u,
-                domain: new URL(u).hostname.replace(/^www\./, ""),
-              };
-            } catch (_) {
-              return { url: u, domain: u };
-            }
-          }),
-        },
+    const out = {
+      __aiCapture: true,
+      payload: {
+        platform: meta.platform,
+        url: meta.url,
+        capturedAt: meta.capturedAt,
+        ttfb_ms: meta.ttfb_ms,
+        prompt_preview: meta.prompt_preview,
+        prompt_length: meta.prompt_length,
+        response_bytes,
+        response_est_tokens,
+        sse_event_count,
+        tool_invoked,
+        tool_name,
+        turn_use_case,
+        model_slug,
+        server_fetched_urls: server_fetched_urls.map((u) => {
+          try {
+            return {
+              url: u,
+              domain: new URL(u).hostname.replace(/^www\./, ""),
+            };
+          } catch (_) {
+            return { url: u, domain: u };
+          }
+        }),
       },
-      "*",
-    );
+    };
+
+    // Debug: print the assembled response text and payload for inspection
+    dbg("constructed response text:", fullText);
+    dbg("constructed payload:", out);
+
+    window.postMessage(out, "*");
   }
 
   // ── Patched fetch ──────────────────────────────────────────────────────
@@ -302,13 +365,7 @@
       return ORIGINAL_FETCH(input, init);
     }
 
-    dbg("intercepted POST:", parsed?.href || url);
-
-    const bodyText = typeof init?.body === "string" ? init.body : "";
-    if (isChatGPT && !isLikelyChatGptUserSend(bodyText)) {
-      dbg("skipping ChatGPT POST: not a user send payload");
-      return ORIGINAL_FETCH(input, init);
-    }
+    const bodyText = await getRequestBodyText(input, init);
 
     const platform = isChatGPT ? "chatgpt" : "claude";
     const { preview: prompt_preview, length: prompt_length } =
@@ -317,13 +374,6 @@
     const callTime = Date.now();
     const response = await ORIGINAL_FETCH(input, init);
     const ttfb_ms = Date.now() - callTime;
-
-    dbg("response received, status:", response.status, "ttfb:", ttfb_ms + "ms");
-
-    if (!response.body) {
-      dbg("no response body, skipping");
-      return response;
-    }
 
     const cloned = response.clone();
     processStream(cloned.body, {

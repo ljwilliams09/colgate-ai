@@ -13,6 +13,21 @@ function fmtBytes(bytes) {
   return `${s.toFixed(s >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
+function fmtNumber(num) {
+  const n = Number(num);
+  if (!n || n < 1000) return String(Math.round(n));
+  if (n < 1000000) {
+    const k = n / 1000;
+    return `${Number(k.toFixed(k >= 10 ? 0 : 1))}k`;
+  }
+  if (n < 1000000000) {
+    const m = n / 1000000;
+    return `${Number(m.toFixed(m >= 10 ? 0 : 1))}m`;
+  }
+  const b = n / 1000000000;
+  return `${Number(b.toFixed(b >= 10 ? 0 : 1))}b`;
+}
+
 function esc(str) {
   if (str == null) return "";
   return String(str)
@@ -262,12 +277,15 @@ function renderOverview(sends, todayAgg) {
   if (toolBreakdown) {
     const entries = topEntries(todayAgg?.tools_invoked || {}, 6);
     toolBreakdown.innerHTML = entries.length
-      ? entries.map(([label, value]) =>
-          `<div class="tool-row">
+      ? entries
+          .map(
+            ([label, value]) =>
+              `<div class="tool-row">
             <span class="tool-row-name">${esc(label)}</span>
             <span class="tool-row-badge">${esc(value)}</span>
-          </div>`
-        ).join("")
+          </div>`,
+          )
+          .join("")
       : `<div class="empty">No tool usage yet</div>`;
   }
 
@@ -276,14 +294,17 @@ function renderOverview(sends, todayAgg) {
     const entries = topEntries(todayAgg?.server_fetched_domains || {}, 5);
     const max = entries[0]?.[1] || 1;
     topTrackers.innerHTML = entries.length
-      ? `<div class="tracker-list">${entries.map(([domain, count], i) =>
-          `<div class="tracker-entry">
+      ? `<div class="tracker-list">${entries
+          .map(
+            ([domain, count], i) =>
+              `<div class="tracker-entry">
             <div class="tracker-entry-bar" style="width:${Math.round((count / max) * 100)}%"></div>
             <span class="tracker-rank">${i + 1}</span>
             <span class="tracker-domain">${esc(domain)}</span>
             <span class="tracker-count">${count}</span>
-          </div>`
-        ).join("")}</div>`
+          </div>`,
+          )
+          .join("")}</div>`
       : `<div class="empty">No trackers detected today</div>`;
   }
 
@@ -291,13 +312,14 @@ function renderOverview(sends, todayAgg) {
   if (platformSplit) {
     const platforms = todayAgg?.platforms || {};
     const chatgpt = Number(platforms["chatgpt"] || 0);
-    const claude  = Number(platforms["claude"]  || 0);
-    const total   = chatgpt + claude || 1;
+    const claude = Number(platforms["claude"] || 0);
+    const total = chatgpt + claude || 1;
     const chatgptPct = Math.round((chatgpt / total) * 100);
-    const claudePct  = 100 - chatgptPct;
-    platformSplit.innerHTML = chatgpt + claude === 0
-      ? `<div class="empty">No data yet</div>`
-      : `<div class="platform-bar">
+    const claudePct = 100 - chatgptPct;
+    platformSplit.innerHTML =
+      chatgpt + claude === 0
+        ? `<div class="empty">No data yet</div>`
+        : `<div class="platform-bar">
            <div class="platform-bar-fill platform-bar-chatgpt" style="width:${chatgptPct}%"></div>
            <div class="platform-bar-fill platform-bar-claude"  style="width:${claudePct}%"></div>
          </div>
@@ -357,13 +379,179 @@ function renderSpecifics(todayAgg, sends) {
   );
 }
 
-function formatDayLabel(dayKey) {
+function formatDayLabel(dayKey, granularity = "day") {
   const d = new Date(`${dayKey}T00:00:00`);
+  if (granularity === "month") {
+    return d.toLocaleDateString(undefined, { month: "short", year: "2-digit" });
+  }
+  if (granularity === "week") {
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+  if (granularity === "year") {
+    return d.toLocaleDateString(undefined, { year: "numeric" });
+  }
   return d.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
   });
 }
+
+function getTimeMetricValue(agg, metric) {
+  if (!agg || typeof agg !== "object") return 0;
+  if (metric === "total_captures") return Number(agg.total_captures || 0);
+  if (metric === "avg_ttfb_ms")
+    return Number(agg.latency_stats?.avg_ttfb_ms || 0);
+  if (metric === "avg_bytes") return Number(agg.response_stats?.avg_bytes || 0);
+  if (metric === "total_est_tokens") {
+    const est = Number(agg.response_stats?.total_est_tokens || 0);
+    if (est > 0) return est;
+    const avgEst = Number(agg.response_stats?.avg_est_tokens || 0);
+    const captures = Number(agg.total_captures || 0);
+    if (avgEst > 0 && captures > 0) return Math.round(avgEst * captures);
+    const words = Number(agg.response_stats?.total_words || 0);
+    if (words > 0) return Math.ceil(words * 1.3);
+    // Fallback for older stored rollups that only have char counts
+    const chars = Number(agg.response_stats?.total_chars || 0);
+    return Math.ceil(chars / 4);
+  }
+  return 0;
+}
+
+function formatMetricValue(metric, value) {
+  if (metric === "avg_bytes") return fmtBytes(Math.round(value));
+  if (metric === "avg_ttfb_ms") return `${Math.round(value)} ms`;
+  if (metric === "total_est_tokens") {
+    const n = Math.round(value);
+    const abbrev = fmtNumber(n);
+    return `${abbrev} ${n === 1 ? "token" : "tokens"}`;
+  }
+  if (metric === "total_captures") {
+    return fmtNumber(Math.round(value));
+  }
+  return fmtNumber(Math.round(value));
+}
+
+function renderTimelineChart(rows, metric) {
+  const svg = document.getElementById("timelineChart");
+  if (!svg) return;
+
+  const width = Math.max(320, svg.clientWidth || 600);
+  const height = 180;
+  const pad = { t: 14, r: 12, b: 30, l: 56 };
+  const innerW = Math.max(10, width - pad.l - pad.r);
+  const innerH = Math.max(10, height - pad.t - pad.b);
+
+  const points = rows.map(([day, agg], i) => ({
+    i,
+    day,
+    value: getTimeMetricValue(agg, metric),
+  }));
+  const values = points.map((p) => p.value);
+  const rawMax = Math.max(1, ...values);
+  const rawMin = Math.min(...values, 0);
+
+  // Set anchor points based on metric type
+  let anchorMin = 0;
+  let anchorMax = 10;
+  if (metric === "avg_ttfb_ms") {
+    anchorMax = 100;
+  } else if (metric === "avg_bytes") {
+    anchorMax = 1024; // 1KB
+  }
+
+  // Expand anchors if data exceeds them
+  const minV = Math.min(rawMin, anchorMin);
+  const maxV = Math.max(rawMax, anchorMax);
+  const finalMax = maxV === minV ? maxV + 1 : maxV;
+
+  // Even spacing: distribute points evenly across the inner width
+  const xSpacing = points.length > 1 ? innerW / (points.length - 1) : 0;
+  const x = (i) => pad.l + i * xSpacing;
+  const y = (v) =>
+    pad.t + innerH - ((v - minV) / Math.max(1e-6, finalMax - minV)) * innerH;
+
+  const path = points
+    .map((p) => `${p.i === 0 ? "M" : "L"}${x(p.i)} ${y(p.value)}`)
+    .join(" ");
+
+  const areaPath = `${path} L ${x(points.length - 1)} ${pad.t + innerH} L ${x(0)} ${pad.t + innerH} Z`;
+
+  const isCountMetric =
+    metric === "total_captures" || metric === "total_est_tokens";
+  let yTickValues;
+  if (isCountMetric) {
+    // Integer, unique ticks for count-based metrics to avoid repeated labels.
+    const cappedMax = Math.max(1, Math.ceil(finalMax));
+    const step = Math.max(1, Math.ceil(cappedMax / 4));
+    yTickValues = [];
+    for (let v = 0; v <= cappedMax; v += step) {
+      yTickValues.push(v);
+    }
+    if (yTickValues[yTickValues.length - 1] !== cappedMax) {
+      yTickValues.push(cappedMax);
+    }
+  } else {
+    yTickValues = [0, 0.25, 0.5, 0.75, 1].map(
+      (t) => minV + (finalMax - minV) * t,
+    );
+  }
+
+  const yTicks = yTickValues.map((v) => ({
+    y: y(v),
+    label: formatMetricValue(metric, v),
+  }));
+
+  const xStep = Math.max(1, Math.floor(points.length / 6));
+  const xLabels = points.filter(
+    (_, i) => i % xStep === 0 || i === points.length - 1,
+  );
+
+  // Determine date granularity based on data span
+  let dateGranularity = "day";
+  if (points.length > 1) {
+    const firstDate = new Date(`${points[0].day}T00:00:00`);
+    const lastDate = new Date(`${points[points.length - 1].day}T00:00:00`);
+    const daySpan = (lastDate - firstDate) / (1000 * 60 * 60 * 24);
+    if (daySpan > 365) {
+      dateGranularity = "year";
+    } else if (daySpan > 90) {
+      dateGranularity = "month";
+    } else if (daySpan > 21) {
+      dateGranularity = "week";
+    }
+  }
+
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.innerHTML = `
+    ${yTicks
+      .map(
+        (t) => `
+      <line class="timeline-chart-grid" x1="${pad.l}" y1="${t.y}" x2="${pad.l + innerW}" y2="${t.y}" />
+      <text class="timeline-chart-label" x="50" y="${t.y + 3}" text-anchor="end">${esc(t.label)}</text>`,
+      )
+      .join("")}
+    <line class="timeline-chart-axis" x1="${pad.l}" y1="${pad.t + innerH}" x2="${pad.l + innerW}" y2="${pad.t + innerH}" />
+    <path class="timeline-chart-area" d="${areaPath}" />
+    <path class="timeline-chart-line" d="${path}" />
+    ${points
+      .map(
+        (p) => `
+      <circle class="timeline-chart-point" cx="${x(p.i)}" cy="${y(p.value)}" r="3.5">
+        <title>${esc(formatDayLabel(p.day, dateGranularity))}: ${esc(formatMetricValue(metric, p.value))}</title>
+      </circle>`,
+      )
+      .join("")}
+    ${xLabels
+      .map(
+        (p) => `
+      <text class="timeline-chart-label" x="${x(p.i)}" y="${height - 8}" text-anchor="middle">${esc(formatDayLabel(p.day, dateGranularity))}</text>`,
+      )
+      .join("")}
+  `;
+}
+
+let timewiseBound = false;
+let timewiseRows = [];
 
 function renderTimewise(allAggs) {
   const timeline = document.getElementById("timeline");
@@ -371,40 +559,105 @@ function renderTimewise(allAggs) {
   const rows = Object.entries(allAggs || {}).sort(([a], [b]) =>
     a.localeCompare(b),
   );
+  timewiseRows = rows;
 
   if (!rows.length) {
-    timeline.innerHTML = `<div class="empty">No daily rollups yet.<br>Start chatting to build your timewise panel.</div>`;
+    timeline.innerHTML = `<div class="empty">No data yet.<br>Start chatting to build your timewise panel.</div>`;
     return;
   }
 
-  const maxCaptures = Math.max(
-    ...rows.map(([, agg]) => agg.total_captures || 0),
-    1,
-  );
-  timeline.innerHTML = rows
-    .map(([day, agg]) => {
-      const captures = agg.total_captures || 0;
-      const width = Math.max(4, Math.round((captures / maxCaptures) * 100));
-      const avg = agg.latency_stats?.avg_ttfb_ms
-        ? `${Math.round(agg.latency_stats.avg_ttfb_ms)} ms`
-        : "-";
-      const bytes = agg.response_stats?.avg_bytes
-        ? fmtBytes(Math.round(agg.response_stats.avg_bytes))
-        : "-";
+  const lifetime = rows.reduce(
+    (acc, [day, agg]) => {
+      const captures = Number(agg.total_captures || 0);
+      const totalBytes = Number(agg.response_stats?.total_bytes || 0);
+      const totalSse = Number(agg.response_stats?.total_sse_events || 0);
+      const totalTtfb = Number(agg.latency_stats?.total_ttfb_ms || 0);
+      const estTokens = getTimeMetricValue(agg, "total_est_tokens");
 
-      return `<div class="timeline-row">
-        <div class="timeline-head">
-          <span class="timeline-day">${formatDayLabel(day)}</span>
-          <span class="timeline-count">${captures} sends</span>
-        </div>
-        <div class="bar-track"><span class="bar-fill" style="width:${width}%"></span></div>
-        <div class="timeline-meta">
-          <span>Avg TTFB: ${avg}</span>
-          <span>Avg Size: ${bytes}</span>
-        </div>
-      </div>`;
-    })
-    .join("");
+      acc.days += 1;
+      acc.captures += captures;
+      acc.totalBytes += totalBytes;
+      acc.totalSse += totalSse;
+      acc.totalEstTokens += estTokens;
+      acc.totalTtfbMs += totalTtfb;
+
+      if (!acc.firstDay || day < acc.firstDay) acc.firstDay = day;
+      if (!acc.lastDay || day > acc.lastDay) acc.lastDay = day;
+      return acc;
+    },
+    {
+      days: 0,
+      captures: 0,
+      totalBytes: 0,
+      totalSse: 0,
+      totalEstTokens: 0,
+      totalTtfbMs: 0,
+      firstDay: null,
+      lastDay: null,
+    },
+  );
+
+  const lifetimeAvgTtfb =
+    lifetime.captures > 0
+      ? `${Math.round(lifetime.totalTtfbMs / lifetime.captures)} ms`
+      : "-";
+  const lifetimeAvgBytes =
+    lifetime.captures > 0
+      ? fmtBytes(lifetime.totalBytes / lifetime.captures)
+      : "-";
+  const lifetimeDateRange =
+    lifetime.firstDay && lifetime.lastDay
+      ? `${formatDayLabel(lifetime.firstDay)} - ${formatDayLabel(lifetime.lastDay)}`
+      : "-";
+
+  const lifetimeHtml = `<section class="timeline-lifetime">
+    <div class="timeline-lifetime-head">
+      <span class="timeline-lifetime-title">Lifetime Aggregations</span>
+      <span class="timeline-lifetime-range">${lifetimeDateRange}</span>
+    </div>
+    <div class="timeline-lifetime-grid">
+      <div class="timeline-lifetime-stat">
+        <span class="timeline-lifetime-k">Days</span>
+        <span class="timeline-lifetime-v">${lifetime.days}</span>
+      </div>
+      <div class="timeline-lifetime-stat">
+        <span class="timeline-lifetime-k">Total Prompts</span>
+        <span class="timeline-lifetime-v">${lifetime.captures}</span>
+      </div>
+      <div class="timeline-lifetime-stat">
+        <span class="timeline-lifetime-k">Est. Tokens</span>
+        <span class="timeline-lifetime-v">${fmtNumber(Math.round(lifetime.totalEstTokens))} tokens</span>
+      </div>
+      <div class="timeline-lifetime-stat">
+        <span class="timeline-lifetime-k">Avg TTFB</span>
+        <span class="timeline-lifetime-v">${lifetimeAvgTtfb}</span>
+      </div>
+      <div class="timeline-lifetime-stat">
+        <span class="timeline-lifetime-k">Avg Resp Size</span>
+        <span class="timeline-lifetime-v">${lifetimeAvgBytes}</span>
+      </div>
+      <div class="timeline-lifetime-stat">
+        <span class="timeline-lifetime-k">SSE Events</span>
+        <span class="timeline-lifetime-v">${lifetime.totalSse}</span>
+      </div>
+    </div>
+  </section>`;
+
+  timeline.innerHTML = lifetimeHtml;
+
+  const metricSelect = document.getElementById("timeMetric");
+  const selectedMetric = metricSelect?.value || "total_captures";
+  renderTimelineChart(rows, selectedMetric);
+
+  if (!timewiseBound && metricSelect) {
+    metricSelect.addEventListener("change", () => {
+      renderTimelineChart(timewiseRows, metricSelect.value || "total_captures");
+    });
+    window.addEventListener("resize", () => {
+      renderTimelineChart(timewiseRows, metricSelect.value || "total_captures");
+    });
+    timewiseBound = true;
+  }
 }
 
 let activePanelIndex = 0;
