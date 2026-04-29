@@ -388,15 +388,26 @@ function renderSvgTimeSeriesChart(days, rows, view) {
     return Object.values(doms).reduce((a, b) => a + b, 0);
   });
   const waterArr = capturesArr.map((c) => c * 40);
-  const modelsArr = rows.map(([, agg]) => {
-    const models = agg.models || {};
-    return Object.keys(models).length;
-  });
   const toolsArr = rows.map(([, agg]) => {
-    const tools = agg.tools_invoked || {};
-    return Object.values(tools).reduce((a, b) => a + b, 0);
-  });
+    const totalCaptures = Number(agg.total_captures || 0);
+    if (!totalCaptures) return 0;
 
+    const promptsWithToolsFromCounter = Number(agg.prompts_with_tools || 0);
+
+    // Fallback for historical rows that predate prompts_with_tools.
+    const tools = agg.tools_invoked || {};
+    const promptsWithToolsFallback = Object.values(tools).reduce(
+      (a, b) => a + Number(b || 0),
+      0,
+    );
+
+    const promptsWithTools = Math.max(
+      promptsWithToolsFromCounter,
+      promptsWithToolsFallback,
+    );
+
+    return Math.min(promptsWithTools, totalCaptures) / totalCaptures;
+  });
   let data = [];
   let color = "";
   let yLabel = "";
@@ -412,20 +423,15 @@ function renderSvgTimeSeriesChart(days, rows, view) {
     color = "#4db8a8";
     yLabel = "Water Use";
     yUnits = "100 mL";
-  } else if (view === "models") {
-    data = modelsArr;
-    color = "#ffa500";
-    yLabel = "Models";
-    yUnits = "count";
   } else if (view === "tools") {
     data = toolsArr;
     color = "#e74c3c";
-    yLabel = "Tools";
-    yUnits = "count";
+    yLabel = "Tool Use Rate";
+    yUnits = "proportion";
   }
 
   const minVal = 0;
-  const maxVal = Math.max(...data, 1);
+  const maxVal = view === "tools" ? 1 : Math.max(...data, 1);
   const range = Math.max(1, maxVal - minVal);
   const xStep = plotW / Math.max(data.length - 1, 1);
   const points = data.map((val, i) => {
@@ -436,6 +442,7 @@ function renderSvgTimeSeriesChart(days, rows, view) {
 
   const formatTick = (v) => {
     if (view === "water") return String(Math.round(v * 10) / 10);
+    if (view === "tools") return `${Math.round(v * 100)}%`;
     return String(Math.round(v));
   };
 
@@ -451,14 +458,18 @@ function renderSvgTimeSeriesChart(days, rows, view) {
   svg += `<text x="${yAxisX}" y="${yAxisY}" font-size="18" fill="#c9d6eb" font-weight="700" text-anchor="middle" transform="rotate(-90 ${yAxisX} ${yAxisY})">${esc(yAxisTitle)}</text>`;
 
   // Y ticks and horizontal grid lines.
-  const yTicks = 4;
-  for (let i = 0; i <= yTicks; i++) {
-    const t = i / yTicks;
-    const y = plotBottom - t * plotH;
-    const val = minVal + t * range;
+  const yTickValues =
+    view === "tools"
+      ? [0, 0.25, 0.5, 0.75, 1]
+      : Array.from({ length: 5 }, (_, i) => {
+          const t = i / 4;
+          return minVal + t * range;
+        });
+  yTickValues.forEach((val) => {
+    const y = plotBottom - ((val - minVal) / range) * plotH;
     svg += `<line x1="${plotLeft}" y1="${y}" x2="${plotRight}" y2="${y}" stroke="#2c3747" stroke-width="1.8" opacity="0.6"/>`;
     svg += `<text x="${plotLeft - 14}" y="${y + 6}" font-size="16" fill="#a2b3ca" text-anchor="end">${esc(formatTick(val))}</text>`;
-  }
+  });
 
   // Axes.
   svg += `<line x1="${plotLeft}" y1="${plotTop}" x2="${plotLeft}" y2="${plotBottom}" stroke="#5c6f8f" stroke-width="2.2"/>`;
@@ -535,21 +546,30 @@ function getLifetimeStats(rows) {
   const mostPopularThirdParty = topThirdPartyEntry?.[0] || "N/A";
   const mostPopularThirdPartyCount = topThirdPartyEntry?.[1] || 0;
 
+  const lifetimeWaterTooltip =
+    "Estimated total water use across all captured prompts (40 mL per prompt), based on https://www.pharmatools.ai/water-consumption-calculator.";
+  const totalPromptsTooltip =
+    "Total number of prompts captured across all days in your timeline.";
+  const popularModelTooltip =
+    "Model that appears most often in your captured AI sessions across all days.";
+  const popularThirdPartyTooltip =
+    "Most frequently contacted third-party domain observed across all captured sessions.";
+
   return `
     <div class="lifetime-grid">
-      <div class="lifetime-card">
+      <div class="lifetime-card" data-tooltip="${esc(lifetimeWaterTooltip)}">
         <div class="lifetime-card-label">Lifetime Water Use</div>
         <div class="lifetime-card-value">${esc(fmtWater(totalWaterMl))}</div>
       </div>
-      <div class="lifetime-card">
+      <div class="lifetime-card" data-tooltip="${esc(totalPromptsTooltip)}">
         <div class="lifetime-card-label">Total Prompts</div>
         <div class="lifetime-card-value">${esc(String(totalPrompts))}</div>
       </div>
-      <div class="lifetime-card">
+      <div class="lifetime-card" data-tooltip="${esc(popularModelTooltip)}">
         <div class="lifetime-card-label">Most Popular Model</div>
         <div class="lifetime-card-value">${esc(mostPopularModel || "N/A")}</div>
       </div>
-      <div class="lifetime-card">
+      <div class="lifetime-card" data-tooltip="${esc(popularThirdPartyTooltip)}">
         <div class="lifetime-card-label">Most Popular Third-Party Contact</div>
         <div class="lifetime-card-value">${esc(
           mostPopularThirdParty === "N/A"

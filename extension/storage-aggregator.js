@@ -77,6 +77,7 @@ async function loadAggregations() {
 function initializeDailyAggregation() {
   return {
     total_captures: 0,
+    prompts_with_tools: 0,
     platforms: {},
     models: {},
     tools_invoked: {},
@@ -124,6 +125,11 @@ async function addCapture(payload) {
 
   const today = aggregations[dateKey];
 
+  // Backfill for older stored rows created before prompts_with_tools existed.
+  if (typeof today.prompts_with_tools !== "number") {
+    today.prompts_with_tools = 0;
+  }
+
   // Total captures
   today.total_captures++;
 
@@ -138,6 +144,10 @@ async function addCapture(payload) {
   }
 
   // Tool invocations
+  if (payload.tool_invoked) {
+    today.prompts_with_tools++;
+  }
+
   if (payload.tool_invoked && payload.tool_name) {
     incrementCounter(today.tools_invoked, payload.tool_name);
   }
