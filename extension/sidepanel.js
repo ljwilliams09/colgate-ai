@@ -499,6 +499,7 @@ function aggregateTrackerLog(log) {
       map[entry.ai][entry.tracker] = {
         label: entry.tracker,
         desc: entry.desc || "",
+        domain: entry.domain || "",
         count: 0,
         tOffset: entry.tOffset,
         beforePrompt: entry.beforePrompt,
@@ -535,13 +536,11 @@ function renderTrackers(log, sessions) {
   }
 
   const platformsEl = document.getElementById("tr-platforms");
-  platformsEl.innerHTML = "";
+  platformsEl.innerHTML = `<p class="tr-intro">Trackers are third-party services that contact your browser while you use AI tools. They can collect behavioral data — sometimes before you've typed a single word. Hover over a company name or timing badge for details.</p>`;
 
   for (const [site, config] of Object.entries(TRACKER_PLATFORMS)) {
     const trackers = aggregated[site] ? Object.values(aggregated[site]) : [];
     const pingCount = log.filter((e) => e.ai === site).length;
-    const before = trackers.filter((t) => t.beforePrompt);
-    const after = trackers.filter((t) => !t.beforePrompt);
 
     let html = `
       <div class="tr-platform">
@@ -555,42 +554,26 @@ function renderTrackers(log, sessions) {
     if (!trackers.length) {
       html += `<div class="tr-empty">None detected yet</div>`;
     } else {
-      if (before.length) {
-        html += `<div class="tr-group-label">Before you typed</div>`;
-        html += before
-          .map(
-            (t) => `
+      html += trackers
+        .map((t) => {
+          const timingClass = t.beforePrompt ? "tr-timing-before" : "tr-timing-after";
+          const timingTip = "Seconds after your session started when this tracker first pinged";
+          const statusLine = t.beforePrompt
+            ? "Fired BEFORE your first message — this company was notified just by opening the AI tab."
+            : "Fired AFTER your first message.";
+          const nameTip = `${statusLine}${t.domain ? ` Domain: ${t.domain}.` : ""} Purpose: ${t.desc}`;
+          return `
           <div class="tr-tracker-card">
             <div>
-              <div class="tr-tracker-name">${esc(t.label)}</div>
-              <div class="tr-tracker-desc">${esc(t.desc)}</div>
+              <div class="tr-tracker-name" data-tooltip="${esc(nameTip)}">${esc(t.label)}</div>
             </div>
             <div class="tr-tracker-meta">
-              <div class="tr-timing-before">t + ${t.tOffset}s</div>
+              <div class="${timingClass}" data-tooltip="${esc(timingTip)}">t + ${t.tOffset}s</div>
               <div class="tr-call-count">${t.count} call${t.count !== 1 ? "s" : ""}</div>
             </div>
-          </div>`,
-          )
-          .join("");
-      }
-      if (after.length) {
-        html += `<div class="tr-group-label">After you typed</div>`;
-        html += after
-          .map(
-            (t) => `
-          <div class="tr-tracker-card">
-            <div>
-              <div class="tr-tracker-name">${esc(t.label)}</div>
-              <div class="tr-tracker-desc">${esc(t.desc)}</div>
-            </div>
-            <div class="tr-tracker-meta">
-              <div class="tr-timing-after">t + ${t.tOffset}s</div>
-              <div class="tr-call-count">${t.count} call${t.count !== 1 ? "s" : ""}</div>
-            </div>
-          </div>`,
-          )
-          .join("");
-      }
+          </div>`;
+        })
+        .join("");
     }
 
     html += `</div>`;

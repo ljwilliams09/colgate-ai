@@ -832,3 +832,23 @@ body {
   font-size: 11px;
   color: #9d8ec0;
 }
+
+.tr-intro {
+  font-size: 11px;
+  color: #9d8ec0;
+  line-height: 1.6;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid #2a2040;
+  margin-bottom: 4px;
+}
+
+.tr-tracker-name {
+  cursor: help;
+  text-decoration: underline dotted #9d8ec0;
+  text-underline-offset: 2px;
+}
+
+.tr-timing-before,
+.tr-timing-after {
+  cursor: help;
+}
