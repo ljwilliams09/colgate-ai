@@ -24,7 +24,7 @@
         <button class="nav-pill is-active" data-index="0">Dashboard</button>
         <button class="nav-pill" data-index="1">Livestream</button>
         <button class="nav-pill" data-index="2">Trackers</button>
-        <button class="nav-pill" data-index="3">Timewise</button>
+        <button class="nav-pill" data-index="3">Timeline</button>
       </div>
 
       <div class="panel-viewport" id="panelViewport">
@@ -39,6 +39,14 @@
               <div class="stat-box" data-tooltip="Total prompts captured today">
                 <div class="stat-value" id="promptsToday">0</div>
                 <div class="stat-label">Prompts Today</div>
+              </div>
+
+              <div
+                class="stat-box"
+                data-tooltip="Estimated water used by today\'s prompts (40 mL per prompt), based on https://www.pharmatools.ai/water-consumption-calculator."
+              >
+                <div class="stat-value" id="waterUse">0 mL</div>
+                <div class="stat-label">Estimated Water Use</div>
               </div>
 
               <div
@@ -64,13 +72,25 @@
               </div>
             </div>
 
-<div class="section-title section-title--spaced" data-tooltip="Which AI tools were invoked during your prompts today — e.g. web search, image generation, code interpreter">Tools Used Today</div>
+            <div
+              class="section-title section-title--spaced"
+              data-tooltip="Which AI tools were invoked during your prompts today — e.g. web search, image generation, code interpreter"
+            >
+              Tools Used Today
+            </div>
             <div class="mini-list" id="toolBreakdown"></div>
 
-            <div class="section-title section-title--spaced" data-tooltip="A mix of: websites the AI browsed during web searches, and internal AI service URLs (e.g. image generation, file storage)">Top URLs AI Accessed Today</div>
+            <div
+              class="section-title section-title--spaced"
+              data-tooltip="A mix of: websites the AI browsed during web searches, and internal AI service URLs (e.g. image generation, file storage)"
+            >
+              Top URLs AI Accessed Today
+            </div>
             <div class="mini-list" id="topTrackers"></div>
 
-            <div class="section-title section-title--spaced">Platform Split</div>
+            <div class="section-title section-title--spaced">
+              Platform Split
+            </div>
             <div id="platformSplit"></div>
           </div>
         </section>
@@ -79,10 +99,14 @@
           <div class="panel-inner">
             <div class="livestream-toggle" id="livestreamSubtabs">
               <div class="livestream-toggle-slider" id="livestreamSlider"></div>
-              <button class="subtab-btn is-active" data-platform="chatgpt">ChatGPT</button>
+              <button class="subtab-btn is-active" data-platform="chatgpt">
+                ChatGPT
+              </button>
               <button class="subtab-btn" data-platform="claude">Claude</button>
             </div>
-            <div class="timeline-note">Recent captures as they arrive (20 max).</div>
+            <div class="timeline-note">
+              Recent captures as they arrive (20 max).
+            </div>
             <div class="cards" id="livestreamCards"></div>
           </div>
         </section>
@@ -119,13 +143,18 @@
           </div>
         </section>
 
-        <section class="panel" data-panel="timewise">
+        <section class="panel" data-panel="timeline">
           <div class="panel-inner">
-            <div class="section-title">Timewise Information</div>
+            <div class="section-title">Timeline Information</div>
             <div class="timeline-note">
               Daily rollups from persistent storage
             </div>
+            <div id="timewiseChart" style="margin-bottom: 12px"></div>
             <div class="timeline" id="timeline"></div>
+            <div class="section-title section-title--spaced">
+              Lifetime Stats
+            </div>
+            <div class="mini-list" id="lifetimeStats"></div>
           </div>
         </section>
       </div>
@@ -142,7 +171,7 @@
           aria-label="Go to livestream"
         ></button>
         <button class="dot" data-index="2" aria-label="Go to trackers"></button>
-        <button class="dot" data-index="3" aria-label="Go to timewise"></button>
+        <button class="dot" data-index="3" aria-label="Go to timeline"></button>
       </div>
     </div>
 
@@ -166,7 +195,7 @@
         <button class="nav-pill is-active" data-index="0">Dashboard</button>
         <button class="nav-pill" data-index="1">Tracker</button>
         <button class="nav-pill" data-index="2">Livestream</button>
-        <button class="nav-pill" data-index="3">Timewise</button>
+        <button class="nav-pill" data-index="3">Timeline</button>
       </div>
 
       <div class="panel-viewport" id="trackerPanelViewport">
@@ -193,9 +222,9 @@
           </div>
         </section>
 
-        <section class="panel" data-panel="tr-timewise">
+        <section class="panel" data-panel="tr-timeline">
           <div class="panel-inner">
-            <div class="section-title">Timewise</div>
+            <div class="section-title">Timeline</div>
             <div class="timeline-note">Tracker timeline</div>
             <div class="tr-timeline-detail" id="tr-timeline-detail"></div>
           </div>

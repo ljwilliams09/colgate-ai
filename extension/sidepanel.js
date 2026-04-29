@@ -13,6 +13,12 @@ function fmtBytes(bytes) {
   return `${s.toFixed(s >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
+function fmtWater(ml) {
+  if (!ml || ml <= 0) return "0 mL";
+  if (ml >= 1000) return `${(ml / 1000).toFixed(1).replace(/\.0$/, "")} L`;
+  return `${Math.round(ml)} mL`;
+}
+
 function esc(str) {
   if (str == null) return "";
   return String(str)
@@ -118,9 +124,13 @@ function bindTooltips() {
   });
   document.addEventListener("focusout", hideTooltip);
 
-  window.addEventListener("scroll", () => {
-    if (tooltipTarget && !tooltip.hidden) placeTooltip(tooltipTarget);
-  }, true);
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (tooltipTarget && !tooltip.hidden) placeTooltip(tooltipTarget);
+    },
+    true,
+  );
   window.addEventListener("resize", () => {
     if (tooltipTarget && !tooltip.hidden) placeTooltip(tooltipTarget);
   });
@@ -208,6 +218,8 @@ function renderOverview(sends, todayAgg) {
   const sseEvents = Number(responseStats.total_sse_events || 0);
 
   setText("promptsToday", promptsToday);
+  const waterMl = promptsToday * 40;
+  setText("waterUse", fmtWater(waterMl));
   const aggAvgTtfb = todayAgg?.latency_stats?.avg_ttfb_ms;
   setText(
     "avgTtfb",
@@ -217,19 +229,25 @@ function renderOverview(sends, todayAgg) {
         ? `${Math.round(ttfbVals.reduce((a, b) => a + b, 0) / ttfbVals.length)} ms`
         : "-",
   );
-  setText("avgResponseBytes", avgResponseBytes ? fmtBytes(Math.round(avgResponseBytes)) : "-");
+  setText(
+    "avgResponseBytes",
+    avgResponseBytes ? fmtBytes(Math.round(avgResponseBytes)) : "-",
+  );
   setText("sseEvents", sseEvents ? `${sseEvents}` : "-");
 
   const toolBreakdown = document.getElementById("toolBreakdown");
   if (toolBreakdown) {
     const entries = topEntries(todayAgg?.tools_invoked || {}, 6);
     toolBreakdown.innerHTML = entries.length
-      ? entries.map(([label, value]) =>
-          `<div class="tool-row">
+      ? entries
+          .map(
+            ([label, value]) =>
+              `<div class="tool-row">
             <span class="tool-row-name">${esc(label)}</span>
             <span class="tool-row-badge">${esc(value)}</span>
-          </div>`
-        ).join("")
+          </div>`,
+          )
+          .join("")
       : `<div class="empty">No tool usage yet</div>`;
   }
 
@@ -238,14 +256,17 @@ function renderOverview(sends, todayAgg) {
     const entries = topEntries(todayAgg?.server_fetched_domains || {}, 5);
     const max = entries[0]?.[1] || 1;
     topTrackers.innerHTML = entries.length
-      ? `<div class="tracker-list">${entries.map(([domain, count], i) =>
-          `<div class="tracker-entry">
+      ? `<div class="tracker-list">${entries
+          .map(
+            ([domain, count], i) =>
+              `<div class="tracker-entry">
             <div class="tracker-entry-bar" style="width:${Math.round((count / max) * 100)}%"></div>
             <span class="tracker-rank">${i + 1}</span>
             <span class="tracker-domain">${esc(domain)}</span>
             <span class="tracker-count">${count}</span>
-          </div>`
-        ).join("")}</div>`
+          </div>`,
+          )
+          .join("")}</div>`
       : `<div class="empty">No URLs accessed by AI today</div>`;
   }
 
@@ -253,13 +274,14 @@ function renderOverview(sends, todayAgg) {
   if (platformSplit) {
     const platforms = todayAgg?.platforms || {};
     const chatgpt = Number(platforms["chatgpt"] || 0);
-    const claude  = Number(platforms["claude"]  || 0);
-    const total   = chatgpt + claude || 1;
+    const claude = Number(platforms["claude"] || 0);
+    const total = chatgpt + claude || 1;
     const chatgptPct = Math.round((chatgpt / total) * 100);
-    const claudePct  = 100 - chatgptPct;
-    platformSplit.innerHTML = chatgpt + claude === 0
-      ? `<div class="empty">No data yet</div>`
-      : `<div class="platform-bar">
+    const claudePct = 100 - chatgptPct;
+    platformSplit.innerHTML =
+      chatgpt + claude === 0
+        ? `<div class="empty">No data yet</div>`
+        : `<div class="platform-bar">
            <div class="platform-bar-fill platform-bar-chatgpt" style="width:${chatgptPct}%"></div>
            <div class="platform-bar-fill platform-bar-claude"  style="width:${claudePct}%"></div>
          </div>
@@ -276,7 +298,8 @@ let livestreamSubtabsReady = false;
 function setupLivestreamSubtabs(sends) {
   // Set default platform from most recent send (only on first load)
   if (!livestreamSubtabsReady && sends.length) {
-    activeLivestreamPlatform = sends[0].platform === "claude" ? "claude" : "chatgpt";
+    activeLivestreamPlatform =
+      sends[0].platform === "claude" ? "claude" : "chatgpt";
   }
 
   const subtabs = document.querySelectorAll("#livestreamSubtabs .subtab-btn");
@@ -284,9 +307,16 @@ function setupLivestreamSubtabs(sends) {
 
   function syncToggle() {
     subtabs.forEach((b) =>
-      b.classList.toggle("is-active", b.dataset.platform === activeLivestreamPlatform),
+      b.classList.toggle(
+        "is-active",
+        b.dataset.platform === activeLivestreamPlatform,
+      ),
     );
-    if (slider) slider.classList.toggle("is-claude", activeLivestreamPlatform === "claude");
+    if (slider)
+      slider.classList.toggle(
+        "is-claude",
+        activeLivestreamPlatform === "claude",
+      );
   }
 
   syncToggle();
@@ -325,7 +355,6 @@ function renderLivestream(sends) {
   renderLivestreamCards(sends);
 }
 
-
 function formatDayLabel(dayKey) {
   const d = new Date(`${dayKey}T00:00:00`);
   return d.toLocaleDateString(undefined, {
@@ -336,29 +365,60 @@ function formatDayLabel(dayKey) {
 
 function renderTimewise(allAggs) {
   const timeline = document.getElementById("timeline");
+  const chart = document.getElementById("timewiseChart");
+  const lifetimeEl = document.getElementById("lifetimeStats");
   if (!timeline) return;
   const rows = Object.entries(allAggs || {}).sort(([a], [b]) =>
     a.localeCompare(b),
   );
 
   if (!rows.length) {
-    timeline.innerHTML = `<div class="empty">No daily rollups yet.<br>Start chatting to build your timewise panel.</div>`;
+    timeline.innerHTML = `<div class="empty">No daily rollups yet.<br>Start chatting to build your timeline panel.</div>`;
+    if (chart) chart.innerHTML = "";
+    if (lifetimeEl) lifetimeEl.innerHTML = "";
     return;
   }
 
-  const maxCaptures = Math.max(
-    ...rows.map(([, agg]) => agg.total_captures || 0),
-    1,
-  );
+  // Build simple per-day arrays
+  const days = rows.map(([day]) => day);
+  const capturesArr = rows.map(([, agg]) => agg.total_captures || 0);
+  const trackersArr = rows.map(([, agg]) => {
+    const doms = agg.server_fetched_domains || {};
+    return Object.values(doms).reduce((a, b) => a + b, 0);
+  });
+  const waterArr = capturesArr.map((c) => c * 40); // mL
+
+  const maxCaptures = Math.max(...capturesArr, 1);
+  const maxTrackers = Math.max(...trackersArr, 1);
+
+  // Render simple flex bar chart
+  if (chart) {
+    const bars = days
+      .map((d, i) => {
+        const capPct = Math.round((capturesArr[i] / maxCaptures) * 100);
+        const trkPct = Math.round((trackersArr[i] / maxTrackers) * 100);
+        const title = `${formatDayLabel(d)} — ${capturesArr[i]} sends — ${trackersArr[i]} tracker pings — ${fmtWater(waterArr[i])}`;
+        return `
+          <div class="tw-bar" title="${esc(title)}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+            <div style="height:80px;display:flex;align-items:flex-end;width:100%">
+              <div style="width:48%;margin-right:4%;background:#2f6b93;height:${capPct}%" title="sends: ${capturesArr[i]}"></div>
+              <div style="width:48%;background:#6f49a6;height:${trkPct}%" title="trackers: ${trackersArr[i]}"></div>
+            </div>
+            <div style="font-size:11px;color:#999;margin-top:6px">${formatDayLabel(d)}</div>
+          </div>`;
+      })
+      .join("");
+
+    chart.innerHTML = `<div style="display:flex;gap:6px;align-items:flex-end;height:120px">${bars}</div>`;
+  }
+
+  // Timeline rows (keeps existing info but removes response-size/length per request)
   timeline.innerHTML = rows
     .map(([day, agg]) => {
       const captures = agg.total_captures || 0;
       const width = Math.max(4, Math.round((captures / maxCaptures) * 100));
       const avg = agg.latency_stats?.avg_ttfb_ms
         ? `${Math.round(agg.latency_stats.avg_ttfb_ms)} ms`
-        : "-";
-      const bytes = agg.response_stats?.avg_bytes
-        ? fmtBytes(Math.round(agg.response_stats.avg_bytes))
         : "-";
 
       return `<div class="timeline-row">
@@ -369,11 +429,23 @@ function renderTimewise(allAggs) {
         <div class="bar-track"><span class="bar-fill" style="width:${width}%"></span></div>
         <div class="timeline-meta">
           <span>Avg TTFB: ${avg}</span>
-          <span>Avg Size: ${bytes}</span>
+          <span>Tracker pings: ${Object.values(agg.server_fetched_domains || {}).reduce((a, b) => a + b, 0)}</span>
         </div>
       </div>`;
     })
     .join("");
+
+  // Lifetime stats: totals across allAggs
+  if (lifetimeEl) {
+    const totalCaptures = capturesArr.reduce((a, b) => a + b, 0);
+    const totalTrackers = trackersArr.reduce((a, b) => a + b, 0);
+    const totalWaterMl = totalCaptures * 40;
+    lifetimeEl.innerHTML = `
+      <div class="mini-row"><span class="mini-label">Total Captures</span><span class="mini-value">${esc(String(totalCaptures))}</span></div>
+      <div class="mini-row"><span class="mini-label">Total Tracker Pings</span><span class="mini-value">${esc(String(totalTrackers))}</span></div>
+      <div class="mini-row"><span class="mini-label">Estimated Water</span><span class="mini-value">${esc(fmtWater(totalWaterMl))}</span></div>
+    `;
+  }
 }
 
 let activePanelIndex = 0;
@@ -413,7 +485,6 @@ function setupSwipe() {
     setActive(index);
   });
 }
-
 
 async function load() {
   const [sendsResp, todayAgg, allAggs] = await Promise.all([
@@ -556,8 +627,11 @@ function renderTrackers(log, sessions) {
     } else {
       html += trackers
         .map((t) => {
-          const timingClass = t.beforePrompt ? "tr-timing-before" : "tr-timing-after";
-          const timingTip = "Seconds after your session started when this tracker first pinged";
+          const timingClass = t.beforePrompt
+            ? "tr-timing-before"
+            : "tr-timing-after";
+          const timingTip =
+            "Seconds after your session started when this tracker first pinged";
           const statusLine = t.beforePrompt
             ? "Fired BEFORE your first message — this company was notified just by opening the AI tab."
             : "Fired AFTER your first message.";
