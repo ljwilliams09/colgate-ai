@@ -363,6 +363,61 @@ function formatDayLabel(dayKey) {
   });
 }
 
+function buildContinuousDailyRows(allAggs) {
+  const entries = Object.entries(allAggs || {}).sort(([a], [b]) =>
+    a.localeCompare(b),
+  );
+  if (!entries.length) return [];
+
+  const start = new Date(`${entries[0][0]}T00:00:00Z`);
+  const end = new Date(`${entries[entries.length - 1][0]}T00:00:00Z`);
+  const byDay = new Map(entries);
+  const rows = [];
+
+  for (
+    const cursor = new Date(start);
+    cursor <= end;
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
+  ) {
+    const dayKey = cursor.toISOString().split("T")[0];
+    rows.push([
+      dayKey,
+      byDay.get(dayKey) || {
+        total_captures: 0,
+        platforms: {},
+        models: {},
+        tools_invoked: {},
+        turn_use_cases: {},
+        response_stats: {
+          total_bytes: 0,
+          total_chars: 0,
+          avg_bytes: 0,
+          avg_chars: 0,
+          max_bytes: 0,
+          min_bytes: 0,
+          total_sse_events: 0,
+        },
+        latency_stats: {
+          total_ttfb_ms: 0,
+          avg_ttfb_ms: 0,
+          max_ttfb_ms: 0,
+          min_ttfb_ms: 0,
+        },
+        prompt_stats: {
+          total_length: 0,
+          avg_length: 0,
+          max_length: 0,
+          min_length: 0,
+        },
+        server_fetched_domains: {},
+        last_updated: null,
+      },
+    ]);
+  }
+
+  return rows;
+}
+
 let activeChartView = "captures";
 
 function renderSvgTimeSeriesChart(days, rows, view) {
@@ -586,9 +641,7 @@ function renderTimewise(allAggs) {
   const chart = document.getElementById("timewiseChart");
   const lifetimeEl = document.getElementById("lifetimeStats");
   if (!timeline) return;
-  const rows = Object.entries(allAggs || {}).sort(([a], [b]) =>
-    a.localeCompare(b),
-  );
+  const rows = buildContinuousDailyRows(allAggs);
 
   if (!rows.length) {
     timeline.innerHTML = `<div class="empty">No daily rollups yet.<br>Start chatting to build your timeline panel.</div>`;

@@ -21,6 +21,24 @@ The `/data_capture/data_info.md` file is a markdown file that highlights the dif
 
 From the data capture, it was clear that each service is structured incredibly differently with ChatGPT being incredibly centralized in the domains that it hosted resources under, whereas Claude was much more distributed in the domains and third party resources that it used.
 
-## Final Additions
+## Extension Guide
 
-For the beta, our plan was to establish that this works well with both ChatGPT and Claude and can give some baseline insights into AI usage. For the final, we plan to add a couple of more insights from the network traffic, including aggregation of use over time and possible tool insights for Claude.
+The extension consists of 4 main tabs as described below:
+
+### Dashboard
+
+    - The dashboard gives insights into the daily AI use of the user. It provides widgets with insights, the most popular tool that was used, and the top url's that were accessed.
+    - The clear button in the top corner will reset the daily counts on the dashboard.
+
+### Live Stream
+
+    - The livestream provides a prompt by prompt breakdown between chatgpt and claude for the size of a response for a prompt, the tools used, response method used, and any third party contacts used during the interaction.
+    - The clear button in the top corner will also reset the livestream.
+
+### Tracking
+
+    - The tracking tab provides information on tracking calls made during interactions. Part of these tracking calls happen during loading or even before a user types anything, others happen afterwards. The tracking tab gives a breakdown of the different companies that are contacted, the total contacts, and breakdowns between ChatGPT and Claude.
+
+### Timeline
+
+    - Finally, the timeline's purpose is to show aggregated data over time. With data being aggregated and stored on a daily basis, the timeline provides graphs on total prompts, estimated water usage, and tool proportion use over time. Additionally, lifetime stats are displayed below regarding estimated lifetime water use from AI, total prompts sent to AI, the users most used model, and the third party company contacted the most.
