@@ -148,50 +148,48 @@
     let loggedDeltaShape = false;
     let loggedChatGptTextShape = false;
 
-    // Extract text from a full SSE object (ChatGPT or Claude shapes)
     function extractText(obj) {
-      const delta = obj.delta || obj.choices?.[0]?.delta;
-      if (!delta) return null;
-
       let out = "";
 
-      // STRING delta
-      if (typeof delta === "string") {
-        return delta;
+      // 1. MOST IMPORTANT: new unified streaming format
+      if (typeof obj?.output_text_delta === "string") {
+        return obj.output_text_delta;
       }
 
-      // direct fields
-      if (typeof delta.content === "string") {
-        out += delta.content;
+      if (typeof obj?.response?.output_text?.delta === "string") {
+        return obj.response.output_text.delta;
       }
 
-      if (typeof delta.text === "string") {
-        out += delta.text;
-      }
+      // 2. message_delta (legacy but still used)
+      if (obj.type === "message_delta") {
+        const d = obj.delta;
+        if (typeof d?.content === "string") out += d.content;
 
-      // array form: [{text: "..."}]
-      if (Array.isArray(delta.content)) {
-        for (const part of delta.content) {
-          if (typeof part === "string") out += part;
-          else if (part?.text) out += part.text;
-          else if (part?.content) out += part.content;
+        if (Array.isArray(d?.content)) {
+          for (const p of d.content) {
+            out += p?.text || p?.content || "";
+          }
         }
       }
 
-      // nested fallback (some ChatGPT variants)
-      if (delta.message?.content) {
-        out += extractText({ delta: delta.message });
+      // 3. content_part_delta (older pipeline)
+      if (obj.type === "content_part_delta") {
+        const d = obj.delta;
+        out += d?.text || d?.content || "";
       }
 
-      // Claude-style reasoning safe handling
-      if (Array.isArray(delta.reasoning_content)) {
-        for (const p of delta.reasoning_content) {
-          if (typeof p === "string") out += p;
-          else out += p?.text || p?.content || "";
+      // 4. fallback delta shapes
+      const delta = obj.delta;
+      if (typeof delta?.content === "string") out += delta.content;
+      if (typeof delta?.text === "string") out += delta.text;
+
+      if (Array.isArray(delta?.content)) {
+        for (const p of delta.content) {
+          out += p?.text || p?.content || "";
         }
       }
 
-      return out.length ? out : null;
+      return out;
     }
 
     try {
@@ -223,12 +221,14 @@
 
           const type = obj.type || "";
 
-          // filter out reasoning / hidden streams
-          if (obj.type === "thinking_delta" || obj.is_reasoning) {
-            continue;
-          }
           // response character counting
           const text = extractText(obj);
+
+          if (meta.platform === "chatgpt") {
+            if (obj.type?.includes("delta") || obj.output_text_delta) {
+              console.log("CHATGPT CHUNK:", obj);
+            }
+          }
 
           if (text) {
             fullText += text;
