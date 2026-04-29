@@ -212,7 +212,6 @@ function collectThirdParties(capturedAt) {
   return out;
 }
 
-
 // ── Extension core ─────────────────────────────────────────────────────────
 
 // Open the side panel when the extension icon is clicked
@@ -269,7 +268,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       persist().catch(() => {});
 
       // Aggregate capture data for persistent statistics
-      addCapture(message.payload).catch((e) => {
+      addCapture(record).catch((e) => {
         console.error("Error adding to aggregation:", e);
       });
 
@@ -344,7 +343,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
-if (message.type === "clear-tracker-log") {
+  if (message.type === "clear-tracker-log") {
     ensureReady().then(async () => {
       for (const site of WATCHED_SITES) delete sessions[site];
       await chrome.storage.local.remove(["trackerLog", "sessions"]);

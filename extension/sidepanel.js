@@ -363,6 +363,204 @@ function formatDayLabel(dayKey) {
   });
 }
 
+let activeChartView = "captures";
+
+function renderSvgTimeSeriesChart(days, rows, view) {
+  const width = 1280;
+  const height = 520;
+  const markerColor = "#ffa500";
+  const layout = {
+    topBand: 20,
+    leftBand: 122,
+    rightBand: 28,
+    bottomBand: 68,
+  };
+  const plotLeft = layout.leftBand;
+  const plotRight = width - layout.rightBand;
+  const plotTop = layout.topBand;
+  const plotBottom = height - layout.bottomBand;
+  const plotW = Math.max(1, plotRight - plotLeft);
+  const plotH = Math.max(1, plotBottom - plotTop);
+
+  const capturesArr = rows.map(([, agg]) => agg.total_captures || 0);
+  const trackersArr = rows.map(([, agg]) => {
+    const doms = agg.server_fetched_domains || {};
+    return Object.values(doms).reduce((a, b) => a + b, 0);
+  });
+  const waterArr = capturesArr.map((c) => c * 40);
+  const modelsArr = rows.map(([, agg]) => {
+    const models = agg.models || {};
+    return Object.keys(models).length;
+  });
+  const toolsArr = rows.map(([, agg]) => {
+    const tools = agg.tools_invoked || {};
+    return Object.values(tools).reduce((a, b) => a + b, 0);
+  });
+
+  let data = [];
+  let color = "";
+  let yLabel = "";
+  let yUnits = "count";
+
+  if (view === "captures") {
+    data = capturesArr;
+    color = "#2f6b93";
+    yLabel = "Prompts";
+    yUnits = "count";
+  } else if (view === "water") {
+    data = waterArr.map((w) => w / 100);
+    color = "#4db8a8";
+    yLabel = "Water Use";
+    yUnits = "100 mL";
+  } else if (view === "models") {
+    data = modelsArr;
+    color = "#ffa500";
+    yLabel = "Models";
+    yUnits = "count";
+  } else if (view === "tools") {
+    data = toolsArr;
+    color = "#e74c3c";
+    yLabel = "Tools";
+    yUnits = "count";
+  }
+
+  const minVal = 0;
+  const maxVal = Math.max(...data, 1);
+  const range = Math.max(1, maxVal - minVal);
+  const xStep = plotW / Math.max(data.length - 1, 1);
+  const points = data.map((val, i) => {
+    const x = plotLeft + i * xStep;
+    const y = plotBottom - ((val - minVal) / range) * plotH;
+    return { x, y, val };
+  });
+
+  const formatTick = (v) => {
+    if (view === "water") return String(Math.round(v * 10) / 10);
+    return String(Math.round(v));
+  };
+
+  let svg = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" style="display:block;font-family:inherit;max-width:100%">`;
+
+  svg += `<defs><clipPath id="plot-clip"><rect x="${plotLeft}" y="${plotTop}" width="${plotW}" height="${plotH}" /></clipPath></defs>`;
+  svg += `<rect x="0" y="0" width="${width}" height="${height}" fill="#171c24" rx="12"/>`;
+
+  // Vertical Y-axis title with units in dedicated left gutter.
+  const yAxisTitle = `${yLabel} (${yUnits})`;
+  const yAxisX = 26;
+  const yAxisY = (plotTop + plotBottom) / 2;
+  svg += `<text x="${yAxisX}" y="${yAxisY}" font-size="18" fill="#c9d6eb" font-weight="700" text-anchor="middle" transform="rotate(-90 ${yAxisX} ${yAxisY})">${esc(yAxisTitle)}</text>`;
+
+  // Y ticks and horizontal grid lines.
+  const yTicks = 4;
+  for (let i = 0; i <= yTicks; i++) {
+    const t = i / yTicks;
+    const y = plotBottom - t * plotH;
+    const val = minVal + t * range;
+    svg += `<line x1="${plotLeft}" y1="${y}" x2="${plotRight}" y2="${y}" stroke="#2c3747" stroke-width="1.8" opacity="0.6"/>`;
+    svg += `<text x="${plotLeft - 14}" y="${y + 6}" font-size="16" fill="#a2b3ca" text-anchor="end">${esc(formatTick(val))}</text>`;
+  }
+
+  // Axes.
+  svg += `<line x1="${plotLeft}" y1="${plotTop}" x2="${plotLeft}" y2="${plotBottom}" stroke="#5c6f8f" stroke-width="2.2"/>`;
+  svg += `<line x1="${plotLeft}" y1="${plotBottom}" x2="${plotRight}" y2="${plotBottom}" stroke="#5c6f8f" stroke-width="2.2"/>`;
+
+  // Line/points clipped to plot area.
+  svg += `<g clip-path="url(#plot-clip)">`;
+  if (points.length > 1) {
+    let pathD = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      pathD += ` L ${points[i].x} ${points[i].y}`;
+    }
+    svg += `<path d="${pathD}" stroke="${color}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.95"/>`;
+  }
+
+  points.forEach((pt) => {
+    svg += `<circle cx="${pt.x}" cy="${pt.y}" r="9" fill="${markerColor}" opacity="0.28"/>`;
+    svg += `<circle cx="${pt.x}" cy="${pt.y}" r="5" fill="${markerColor}" opacity="0.98"/>`;
+  });
+  svg += `</g>`;
+
+  // X tick labels in dedicated bottom band.
+  const labelIndices = [0];
+  if (days.length > 2) labelIndices.push(Math.floor(days.length / 2));
+  if (days.length > 1) labelIndices.push(days.length - 1);
+  [...new Set(labelIndices)].forEach((idx) => {
+    if (idx < points.length) {
+      const pt = points[idx];
+      svg += `<text x="${pt.x}" y="${height - 22}" font-size="17" fill="#a2b3ca" text-anchor="middle">${esc(formatDayLabel(days[idx]))}</text>`;
+    }
+  });
+
+  svg += `<text x="${(plotLeft + plotRight) / 2}" y="${height - 5}" font-size="15" fill="#7d90ac" text-anchor="middle">Date</text>`;
+  svg += `</svg>`;
+
+  return svg;
+}
+
+function renderChartView(days, rows, view) {
+  return renderSvgTimeSeriesChart(days, rows, view);
+}
+
+function getLifetimeStats(rows) {
+  const capturesArr = rows.map(([, agg]) => agg.total_captures || 0);
+  const domainCounts = {};
+  rows.forEach(([, agg]) => {
+    const doms = agg.server_fetched_domains || {};
+    Object.entries(doms).forEach(([domain, count]) => {
+      domainCounts[domain] = (domainCounts[domain] || 0) + Number(count || 0);
+    });
+  });
+  const totalPrompts = capturesArr.reduce((a, b) => a + b, 0);
+  const totalTrackerPings = Object.values(domainCounts).reduce(
+    (a, b) => a + b,
+    0,
+  );
+  const totalWaterMl = totalPrompts * 40;
+
+  const modelCounts = {};
+  rows.forEach(([, agg]) => {
+    const models = agg.models || {};
+    Object.entries(models).forEach(([model, count]) => {
+      modelCounts[model] = (modelCounts[model] || 0) + Number(count || 0);
+    });
+  });
+
+  const mostPopularModel = Object.entries(modelCounts).sort(
+    (a, b) => b[1] - a[1],
+  )[0]?.[0];
+
+  const topThirdPartyEntry = Object.entries(domainCounts).sort(
+    (a, b) => b[1] - a[1],
+  )[0];
+  const mostPopularThirdParty = topThirdPartyEntry?.[0] || "N/A";
+  const mostPopularThirdPartyCount = topThirdPartyEntry?.[1] || 0;
+
+  return `
+    <div class="lifetime-grid">
+      <div class="lifetime-card">
+        <div class="lifetime-card-label">Lifetime Water Use</div>
+        <div class="lifetime-card-value">${esc(fmtWater(totalWaterMl))}</div>
+      </div>
+      <div class="lifetime-card">
+        <div class="lifetime-card-label">Total Prompts</div>
+        <div class="lifetime-card-value">${esc(String(totalPrompts))}</div>
+      </div>
+      <div class="lifetime-card">
+        <div class="lifetime-card-label">Most Popular Model</div>
+        <div class="lifetime-card-value">${esc(mostPopularModel || "N/A")}</div>
+      </div>
+      <div class="lifetime-card">
+        <div class="lifetime-card-label">Most Popular Third-Party Contact</div>
+        <div class="lifetime-card-value">${esc(
+          mostPopularThirdParty === "N/A"
+            ? "N/A"
+            : `${mostPopularThirdParty} (${mostPopularThirdPartyCount})`,
+        )}</div>
+      </div>
+    </div>
+  `;
+}
+
 function renderTimewise(allAggs) {
   const timeline = document.getElementById("timeline");
   const chart = document.getElementById("timewiseChart");
@@ -379,72 +577,18 @@ function renderTimewise(allAggs) {
     return;
   }
 
-  // Build simple per-day arrays
   const days = rows.map(([day]) => day);
-  const capturesArr = rows.map(([, agg]) => agg.total_captures || 0);
-  const trackersArr = rows.map(([, agg]) => {
-    const doms = agg.server_fetched_domains || {};
-    return Object.values(doms).reduce((a, b) => a + b, 0);
-  });
-  const waterArr = capturesArr.map((c) => c * 40); // mL
-
-  const maxCaptures = Math.max(...capturesArr, 1);
-  const maxTrackers = Math.max(...trackersArr, 1);
-
-  // Render simple flex bar chart
+  // Render chart based on active view
   if (chart) {
-    const bars = days
-      .map((d, i) => {
-        const capPct = Math.round((capturesArr[i] / maxCaptures) * 100);
-        const trkPct = Math.round((trackersArr[i] / maxTrackers) * 100);
-        const title = `${formatDayLabel(d)} — ${capturesArr[i]} sends — ${trackersArr[i]} tracker pings — ${fmtWater(waterArr[i])}`;
-        return `
-          <div class="tw-bar" title="${esc(title)}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
-            <div style="height:80px;display:flex;align-items:flex-end;width:100%">
-              <div style="width:48%;margin-right:4%;background:#2f6b93;height:${capPct}%" title="sends: ${capturesArr[i]}"></div>
-              <div style="width:48%;background:#6f49a6;height:${trkPct}%" title="trackers: ${trackersArr[i]}"></div>
-            </div>
-            <div style="font-size:11px;color:#999;margin-top:6px">${formatDayLabel(d)}</div>
-          </div>`;
-      })
-      .join("");
-
-    chart.innerHTML = `<div style="display:flex;gap:6px;align-items:flex-end;height:120px">${bars}</div>`;
+    chart.innerHTML = renderChartView(days, rows, activeChartView);
   }
 
-  // Timeline rows (keeps existing info but removes response-size/length per request)
-  timeline.innerHTML = rows
-    .map(([day, agg]) => {
-      const captures = agg.total_captures || 0;
-      const width = Math.max(4, Math.round((captures / maxCaptures) * 100));
-      const avg = agg.latency_stats?.avg_ttfb_ms
-        ? `${Math.round(agg.latency_stats.avg_ttfb_ms)} ms`
-        : "-";
+  // Timeline rows removed - showing only chart and lifetime stats
+  timeline.innerHTML = "";
 
-      return `<div class="timeline-row">
-        <div class="timeline-head">
-          <span class="timeline-day">${formatDayLabel(day)}</span>
-          <span class="timeline-count">${captures} sends</span>
-        </div>
-        <div class="bar-track"><span class="bar-fill" style="width:${width}%"></span></div>
-        <div class="timeline-meta">
-          <span>Avg TTFB: ${avg}</span>
-          <span>Tracker pings: ${Object.values(agg.server_fetched_domains || {}).reduce((a, b) => a + b, 0)}</span>
-        </div>
-      </div>`;
-    })
-    .join("");
-
-  // Lifetime stats: totals across allAggs
+  // Lifetime stats are fixed across views
   if (lifetimeEl) {
-    const totalCaptures = capturesArr.reduce((a, b) => a + b, 0);
-    const totalTrackers = trackersArr.reduce((a, b) => a + b, 0);
-    const totalWaterMl = totalCaptures * 40;
-    lifetimeEl.innerHTML = `
-      <div class="mini-row"><span class="mini-label">Total Captures</span><span class="mini-value">${esc(String(totalCaptures))}</span></div>
-      <div class="mini-row"><span class="mini-label">Total Tracker Pings</span><span class="mini-value">${esc(String(totalTrackers))}</span></div>
-      <div class="mini-row"><span class="mini-label">Estimated Water</span><span class="mini-value">${esc(fmtWater(totalWaterMl))}</span></div>
-    `;
+    lifetimeEl.innerHTML = getLifetimeStats(rows);
   }
 }
 
@@ -547,6 +691,21 @@ bindTooltips();
 setupSwipe();
 startClock();
 scheduleMidnightClear();
+
+// Setup chart selector
+const chartSelector = document.getElementById("chartSelector");
+if (chartSelector) {
+  const buttons = chartSelector.querySelectorAll(".chart-selector-btn");
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      buttons.forEach((b) => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      activeChartView = btn.dataset.view;
+      load().catch(() => {});
+    });
+  });
+}
+
 load().catch(() => {});
 
 // ── Trackers tab ───────────────────────────────────────────────────────────────

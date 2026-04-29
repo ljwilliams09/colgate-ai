@@ -149,7 +149,42 @@
             <div class="timeline-note">
               Daily rollups from persistent storage
             </div>
-            <div id="timewiseChart" style="margin-bottom: 12px"></div>
+            <div
+              class="chart-selector"
+              id="chartSelector"
+              style="
+                margin-bottom: 12px;
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+              "
+            >
+              <button class="chart-selector-btn is-active" data-view="captures">
+                Prompts
+              </button>
+              <button class="chart-selector-btn" data-view="water">
+                Water Use
+              </button>
+              <button class="chart-selector-btn" data-view="models">
+                Models & Platforms
+              </button>
+              <button class="chart-selector-btn" data-view="tools">
+                Tools Used
+              </button>
+            </div>
+            <div
+              id="timewiseChart"
+              style="
+                margin-bottom: 16px;
+                padding: 12px;
+                height: 280px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 6px;
+                background: rgba(15, 16, 22, 0.3);
+              "
+            ></div>
             <div class="timeline" id="timeline"></div>
             <div class="section-title section-title--spaced">
               Lifetime Stats

@@ -91,6 +91,80 @@
     return { preview: "", length: 0 };
   }
 
+  function extractRequestModel(bodyText, platform) {
+    try {
+      const parsed = JSON.parse(bodyText);
+      if (platform === "claude") {
+        if (typeof parsed.model === "string" && parsed.model.trim()) {
+          return parsed.model.trim();
+        }
+        if (typeof parsed.model_slug === "string" && parsed.model_slug.trim()) {
+          return parsed.model_slug.trim();
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  function pickFirstString(candidates) {
+    for (const item of candidates) {
+      if (typeof item === "string" && item.trim()) return item.trim();
+    }
+    return null;
+  }
+
+  function extractToolAndModelFromEvent(obj) {
+    const type = obj?.type || "";
+
+    const model = pickFirstString([
+      obj?.message?.model,
+      obj?.model,
+      obj?.model_slug,
+      obj?.metadata?.model_slug,
+      obj?.message?.metadata?.model_slug,
+    ]);
+
+    // Claude tool events commonly appear as content_block_start with tool_use.
+    const contentBlockType = obj?.content_block?.type;
+    const blockToolName = pickFirstString([
+      obj?.content_block?.name,
+      obj?.content_block?.tool_name,
+    ]);
+    const isToolBlock =
+      type === "content_block_start" &&
+      (contentBlockType === "tool_use" || Boolean(blockToolName));
+
+    const metaToolInvoked = Boolean(
+      obj?.metadata?.tool_invoked ||
+      obj?.message?.metadata?.tool_invoked ||
+      obj?.tool_invoked ||
+      obj?.tool_used,
+    );
+
+    const explicitToolName = pickFirstString([
+      obj?.metadata?.tool_name,
+      obj?.metadata?.tool,
+      obj?.message?.metadata?.tool_name,
+      obj?.message?.metadata?.tool,
+      obj?.tool_name,
+      obj?.tool,
+      obj?.delta?.tool_name,
+      obj?.delta?.tool,
+      obj?.content?.tool_name,
+      obj?.content?.tool,
+      blockToolName,
+      Array.isArray(obj?.tools) ? obj.tools[0]?.name : null,
+      Array.isArray(obj?.tool_calls) ? obj.tool_calls[0]?.name : null,
+      Array.isArray(obj?.tool_calls) ? obj.tool_calls[0]?.function?.name : null,
+    ]);
+
+    return {
+      model,
+      tool_invoked: metaToolInvoked || isToolBlock || Boolean(explicitToolName),
+      tool_name: explicitToolName,
+    };
+  }
+
   function isLikelyChatGptUserSend(bodyText) {
     try {
       const parsed = JSON.parse(bodyText);
@@ -191,6 +265,12 @@
             });
           }
 
+          // Normalize tool/model across Claude + Anthropic event shapes.
+          const detected = extractToolAndModelFromEvent(obj);
+          if (detected.model) model_slug = detected.model;
+          if (detected.tool_invoked) tool_invoked = true;
+          if (detected.tool_name) tool_name = detected.tool_name;
+
           if (type === "url_moderation") {
             const u = obj.url_moderation_result?.full_url;
             if (u && !server_fetched_urls.includes(u))
@@ -219,6 +299,9 @@
 
     // Default turn_use_case to "text" if the stream had no metadata event
     if (!turn_use_case) turn_use_case = "text";
+    if (!model_slug && typeof meta.request_model_slug === "string") {
+      model_slug = meta.request_model_slug;
+    }
 
     dbg("send captured:", {
       turn_use_case,
@@ -284,6 +367,7 @@
     const platform = isChatGPT ? "chatgpt" : "claude";
     const { preview: prompt_preview, length: prompt_length } =
       extractPromptPreview(bodyText, platform);
+    const request_model_slug = extractRequestModel(bodyText, platform);
 
     const callTime = Date.now();
     const response = await ORIGINAL_FETCH(input, init);
@@ -303,6 +387,8 @@
       capturedAt: callTime,
       ttfb_ms,
       prompt_preview,
+      prompt_length,
+      request_model_slug,
     }).catch((e) => dbg("processStream error:", e.message));
 
     return response;

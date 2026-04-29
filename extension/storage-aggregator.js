@@ -213,6 +213,15 @@ async function addCapture(payload) {
     }
   }
 
+  // Third-party contacts collected by webRequest buffer.
+  if (Array.isArray(payload.third_party_contacts)) {
+    for (const contact of payload.third_party_contacts) {
+      if (contact?.domain) {
+        incrementCounter(today.server_fetched_domains, contact.domain);
+      }
+    }
+  }
+
   // Update timestamp
   today.last_updated = Date.now();
 
